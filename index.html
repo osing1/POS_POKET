@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POS Pocket - Dashboard</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #ff5722;
+            --navy: #0f172a;
+            --bg-body: #f8fafc;
+        }
+        body { 
+            background-color: var(--bg-body); 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            overflow-x: hidden; 
+        }
+        
+        /* Background Atas Melengkung */
+        .bg-header-curve {
+            background: linear-gradient(135deg, #ff7043 0%, #ff5722 100%);
+            border-bottom-left-radius: 35px;
+            border-bottom-right-radius: 35px;
+        }
+
+        /* Glassmorphism & Glossy Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+        }
+        
+        /* 3D Icon Simulation */
+        .icon-3d {
+            filter: drop-shadow(0px 6px 4px rgba(0,0,0,0.1));
+            transform: translateZ(0);
+        }
+
+        /* Navigasi Bawah & Tombol Sale Mengambang (Hanya Mobile) */
+        .bottom-nav {
+            box-shadow: 0 -4px 25px rgba(0,0,0,0.06);
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+        }
+        .btn-sale-float {
+            background: linear-gradient(135deg, #ff7043, #ff5722);
+            transform: translateY(-20px);
+            box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4);
+            border: 4px solid white;
+        }
+    </style>
+</head>
+<body class="flex text-slate-800 pb-24 md:pb-0">
+
+    <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden border-r border-slate-800">
+        <div class="p-6 flex items-center space-x-3 border-b border-slate-800/80 bg-slate-900">
+            <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg">
+                <i data-lucide="pocket" class="text-white"></i>
+            </div>
+            <h2 class="text-2xl font-extrabold tracking-wide">POS Pocket</h2>
+        </div>
+        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6">
+            <a href="index.html" class="flex items-center space-x-3 bg-slate-800/80 text-orange-400 p-3.5 rounded-xl border border-slate-700 shadow-sm"><i data-lucide="home"></i> <span class="font-bold">Beranda</span></a>
+            <a href="inventory.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="package"></i> <span class="font-medium">Inventori</span></a>
+            <a href="sale.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="scan-barcode"></i> <span class="font-medium">Kasir / POS</span></a>
+            <a href="supplier.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="truck"></i> <span class="font-medium">Supplier</span></a>
+            <a href="hrm.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="users"></i> <span class="font-medium">Manajemen HRM</span></a>
+            <a href="reports.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="bar-chart-2"></i> <span class="font-medium">Laporan</span></a>
+        </nav>
+        <div class="p-5 border-t border-slate-800/80 bg-slate-900">
+            <button onclick="turboSync()" class="w-full flex items-center justify-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-white p-3.5 rounded-xl transition shadow-lg font-bold">
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i><span>Turbo Sync</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="w-full min-h-screen relative md:ml-[260px] md:w-[calc(100%-260px)]">
+        
+        <div class="absolute top-0 left-0 w-full h-64 md:h-60 bg-header-curve z-0"></div>
+
+        <div class="relative z-10 px-5 pt-6 max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center space-x-3 bg-white/20 backdrop-blur-md p-1.5 pr-5 rounded-full border border-white/30 shadow-sm cursor-pointer hover:bg-white/30 transition">
+                    <div class="w-11 h-11 bg-slate-900 rounded-full flex items-center justify-center overflow-hidden border-2 border-white">
+                        <i data-lucide="user" class="text-white w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-white/90 font-medium" data-lang="hello">Halo,</p>
+                        <h1 class="text-sm font-bold text-white tracking-wide">Administrator</h1>
+                    </div>
+                </div>
+                <button class="relative p-2.5 text-white bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-sm transition border border-white/20 shadow-sm">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-2 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-orange-500"></span>
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl p-3.5 flex items-center space-x-3 shadow-sm mb-5 border border-slate-100">
+                <div class="bg-orange-50 p-2.5 rounded-xl text-orange-500 border border-orange-100">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                </div>
+                <span class="font-bold text-sm text-slate-700" id="current-date"></span>
+            </div>
+
+            <div class="glass-card bg-gradient-to-br from-white to-slate-50 p-6 mb-6 relative overflow-hidden">
+                <div class="relative z-10 w-2/3 md:w-3/4">
+                    <h2 class="text-xl md:text-2xl font-extrabold text-slate-800 mb-2">Mesin Kasir Mobile</h2>
+                    <p class="text-xs md:text-sm text-slate-500 leading-relaxed font-medium">Semua fitur sistem Point of Sale dalam genggaman Anda.</p>
+                </div>
+                
+                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 w-20 h-24 bg-slate-800 rounded-2xl shadow-xl border-t-4 border-orange-500 flex flex-col p-2 icon-3d z-20">
+                    <div class="h-1/2 bg-slate-700 rounded-lg mb-1.5 flex items-center justify-center border border-slate-600"><span class="text-emerald-400 text-sm font-mono font-bold">30.00</span></div>
+                    <div class="h-1/2 flex space-x-1.5">
+                        <div class="w-1/2 bg-slate-100 rounded-lg flex items-center justify-center font-bold text-slate-800 shadow-sm">+</div>
+                        <div class="w-1/2 bg-orange-500 rounded-lg flex items-center justify-center font-bold text-white shadow-sm">=</div>
+                    </div>
+                </div>
+                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-slate-200 rounded-full blur-2xl opacity-50 z-0"></div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                <a href="supplier.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-orange-200">
+                    <div class="w-14 h-14 mb-3 bg-orange-50 rounded-2xl flex items-center justify-center icon-3d border border-orange-100">
+                        <i data-lucide="shopping-bag" class="text-orange-500 w-7 h-7"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Pembelian</span>
+                </a>
+                <a href="reports.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-teal-200">
+                    <div class="w-14 h-14 mb-3 bg-teal-50 rounded-2xl flex items-center justify-center icon-3d border border-teal-100">
+                        <i data-lucide="banknote" class="text-teal-600 w-7 h-7"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Pengeluaran</span>
+                </a>
+                <a href="hrm.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-rose-200">
+                    <div class="w-14 h-14 mb-3 bg-rose-50 rounded-2xl flex items-center justify-center icon-3d border border-rose-100">
+                        <i data-lucide="users-2" class="text-rose-500 w-7 h-7"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Pelanggan</span>
+                </a>
+                <a href="reports.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-indigo-200">
+                    <div class="w-14 h-14 mb-3 bg-indigo-50 rounded-2xl flex items-center justify-center icon-3d border border-indigo-100">
+                        <i data-lucide="file-text" class="text-indigo-500 w-7 h-7"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Faktur</span>
+                </a>
+                <a href="hrm.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-emerald-200">
+                    <div class="w-14 h-14 mb-3 bg-emerald-50 rounded-2xl flex items-center justify-center icon-3d border border-emerald-100">
+                        <i data-lucide="shield-check" class="text-emerald-600 w-7 h-7"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Manajemen HRM</span>
+                </a>
+                <a href="reports.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-purple-200">
+                    <div class="w-14 h-14 mb-3 bg-purple-50 rounded-2xl flex items-center justify-center icon-3d border border-purple-100">
+                        <i data-lucide="pie-chart" class="text-purple-600 w-7 h-7"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700">Laporan</span>
+                </a>
+            </div>
+
+            <div class="mb-4 flex justify-between items-end px-1">
+                <h3 class="font-extrabold text-lg text-slate-800">Transaksi Terakhir</h3>
+                <a href="reports.html" class="text-sm font-bold text-orange-500 hover:text-orange-600 transition">Lihat Semua ></a>
+            </div>
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center justify-between mb-8 hover:bg-slate-50 transition cursor-pointer">
+                <div class="flex items-center space-x-4">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <i data-lucide="receipt" class="text-slate-600 w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-extrabold text-slate-800">15/06/2026</p>
+                        <p class="text-xs text-slate-500 font-medium">INV-001</p>
+                    </div>
+                </div>
+                <div class="text-right flex items-center space-x-3">
+                    <p class="text-sm font-extrabold text-slate-800">Rp 125.000</p>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <nav class="md:hidden bottom-nav fixed bottom-0 w-full bg-white flex justify-around items-end px-2 pt-2 pb-5 z-50">
+        <a href="index.html" class="flex flex-col items-center text-orange-500 p-2 w-16">
+            <i data-lucide="home" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold mt-1.5">Home</span>
+        </a>
+        <a href="inventory.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition">
+            <i data-lucide="package" class="w-6 h-6"></i>
+            <span class="text-[10px] font-medium mt-1.5">Stok</span>
+        </a>
+        
+        <div class="w-16 flex justify-center">
+            <a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6 hover:scale-105 transition-transform">
+                <i data-lucide="scan-line" class="w-6 h-6"></i>
+                <span class="text-[10px] font-bold mt-0.5">Sale</span>
+            </a>
+        </div>
+
+        <a href="supplier.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition">
+            <i data-lucide="users" class="w-6 h-6"></i>
+            <span class="text-[10px] font-medium mt-1.5">Supplier</span>
+        </a>
+        <a href="more.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition">
+            <i data-lucide="layout-grid" class="w-6 h-6"></i>
+            <span class="text-[10px] font-medium mt-1.5">More</span>
+        </a>
+    </nav>
+
+    <script>
+        // Inisialisasi Icon Lucide
+        lucide.createIcons();
+        
+        // Menampilkan Tanggal Hari Ini dalam Bahasa Indonesia
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('id-ID', options);
+    </script>
+    <script src="js/app.js"></script>
+    <script src="js/sync.js"></script>
+</body>
+</html>

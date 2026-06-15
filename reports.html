@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POS Pocket - Laporan</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root { --bg-body: #f8fafc; }
+        body { background-color: var(--bg-body); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 4px 15px -5px rgba(0, 0, 0, 0.05); border-radius: 16px; }
+        .bottom-nav { box-shadow: 0 -4px 25px rgba(0,0,0,0.06); border-top-left-radius: 24px; border-top-right-radius: 24px; }
+        .btn-sale-float { background: linear-gradient(135deg, #ff7043, #ff5722); transform: translateY(-20px); box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4); border: 4px solid white; }
+    </style>
+</head>
+<body class="flex text-slate-800 pb-24 md:pb-0">
+
+    <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden border-r border-slate-800">
+        <div class="p-6 flex items-center space-x-3 border-b border-slate-800/80 bg-slate-900">
+            <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg"><i data-lucide="pocket" class="text-white"></i></div>
+            <h2 class="text-2xl font-extrabold tracking-wide">POS Pocket</h2>
+        </div>
+        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6">
+            <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="home"></i> <span class="font-medium">Beranda</span></a>
+            <a href="inventory.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="package"></i> <span class="font-medium">Inventori</span></a>
+            <a href="sale.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="scan-barcode"></i> <span class="font-medium">Kasir / POS</span></a>
+            <a href="supplier.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="truck"></i> <span class="font-medium">Supplier</span></a>
+            <a href="hrm.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="users"></i> <span class="font-medium">Manajemen HRM</span></a>
+            <a href="reports.html" class="flex items-center space-x-3 bg-slate-800/80 text-orange-400 p-3.5 rounded-xl border border-slate-700 shadow-sm"><i data-lucide="bar-chart-2"></i> <span class="font-bold">Laporan</span></a>
+        </nav>
+    </aside>
+
+    <main class="w-full min-h-screen relative md:ml-[260px] md:w-[calc(100%-260px)] bg-slate-50">
+        <header class="bg-white p-5 flex justify-between items-center shadow-sm sticky top-0 z-40 border-b border-slate-100">
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800">Laporan & Analitik</h1>
+                <p class="text-xs font-medium text-slate-500">Ringkasan keuangan Anda</p>
+            </div>
+            <button class="bg-slate-800 hover:bg-slate-700 text-white p-2.5 rounded-xl shadow-md transition flex items-center space-x-2">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                <span class="hidden md:inline font-bold text-sm pr-2">Ekspor PDF</span>
+            </button>
+        </header>
+
+        <div class="p-5 max-w-5xl mx-auto space-y-6">
+            
+            <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <div class="flex items-center space-x-2 text-slate-600 font-medium text-sm">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span>Hari Ini</span>
+                </div>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-card p-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Pendapatan Koto</p>
+                    <h3 class="text-lg md:text-xl font-extrabold text-slate-800">Rp 1.250.000</h3>
+                    <p class="text-[10px] text-emerald-500 font-bold mt-2"><i data-lucide="trending-up" class="w-3 h-3 inline mr-1"></i>+12% vs kemarin</p>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Transaksi</p>
+                    <h3 class="text-lg md:text-xl font-extrabold text-slate-800">48 Nota</h3>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Item Terjual</p>
+                    <h3 class="text-lg md:text-xl font-extrabold text-slate-800">124 Pcs</h3>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Pengeluaran</p>
+                    <h3 class="text-lg md:text-xl font-extrabold text-rose-500">Rp 150.000</h3>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="font-extrabold text-lg text-slate-800 mb-4">Riwayat Penjualan Terbaru</h3>
+                <div class="bg-white rounded-2xl p-2 shadow-sm border border-slate-100 divide-y divide-slate-100">
+                    
+                    <div class="p-3 flex items-center justify-between hover:bg-slate-50 transition rounded-xl cursor-pointer">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2.5 bg-orange-50 text-orange-500 rounded-lg border border-orange-100">
+                                <i data-lucide="receipt" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">INV-20260615-003</p>
+                                <p class="text-[11px] text-slate-500 font-medium">15:45 WIB • Tunai</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-extrabold text-slate-800">Rp 45.000</p>
+                            <span class="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded font-bold">Lunas</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 flex items-center justify-between hover:bg-slate-50 transition rounded-xl cursor-pointer">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2.5 bg-orange-50 text-orange-500 rounded-lg border border-orange-100">
+                                <i data-lucide="receipt" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">INV-20260615-002</p>
+                                <p class="text-[11px] text-slate-500 font-medium">13:10 WIB • QRIS</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-extrabold text-slate-800">Rp 120.000</p>
+                            <span class="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded font-bold">Lunas</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <nav class="md:hidden bottom-nav fixed bottom-0 w-full bg-white flex justify-around items-end px-2 pt-2 pb-5 z-50">
+        <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Home</span></a>
+        <a href="inventory.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="package" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Stok</span></a>
+        <div class="w-16 flex justify-center"><a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6"><i data-lucide="scan-line" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-0.5">Sale</span></a></div>
+        <a href="supplier.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="users" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Supplier</span></a>
+        <a href="more.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">More</span></a>
+    </nav>
+
+    <script>lucide.createIcons();</script>
+    <script src="js/app.js"></script>
+</body>
+</html>

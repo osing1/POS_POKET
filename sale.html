@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POS Pocket - Kasir</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .cart-slide-up { transform: translateY(0%); }
+        .cart-slide-down { transform: translateY(100%); }
+        #reader { width: 100%; border-radius: 16px; overflow: hidden; border: none; }
+        #reader video { object-fit: cover; }
+
+        /* Pengaturan Cetak Struk (Printer Thermal/PDF) */
+        @media print {
+            body * { visibility: hidden; }
+            #receipt-printable-area, #receipt-printable-area * { visibility: visible; }
+            #receipt-printable-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 10px; background: white; box-shadow: none; font-family: monospace; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="flex text-slate-800 md:pb-0 h-screen overflow-hidden">
+
+    <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden border-r border-slate-800 no-print">
+        <div class="p-6 flex items-center space-x-3 border-b border-slate-800 bg-slate-900">
+            <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg"><i data-lucide="pocket" class="text-white"></i></div>
+            <h2 class="text-2xl font-extrabold tracking-wide">POS Pocket</h2>
+        </div>
+        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6 hide-scrollbar">
+            <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="home"></i> <span class="font-medium">Beranda</span></a>
+            <a href="inventory.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="package"></i> <span class="font-medium">Inventori</span></a>
+            <a href="sale.html" class="flex items-center space-x-3 bg-slate-800/80 text-orange-400 p-3.5 rounded-xl border border-slate-700 shadow-sm"><i data-lucide="scan-barcode"></i> <span class="font-bold">Kasir / POS</span></a>
+            <a href="supplier.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="truck"></i> <span class="font-medium">Supplier</span></a>
+            <a href="hrm.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="users"></i> <span class="font-medium">Manajemen HRM</span></a>
+            <a href="reports.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="bar-chart-2"></i> <span class="font-medium">Laporan</span></a>
+        </nav>
+        <div class="p-5 border-t border-slate-800/80 bg-slate-900">
+            <button onclick="turboSync()" class="w-full flex items-center justify-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-white p-3.5 rounded-xl transition shadow-lg font-bold">
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i><span>Turbo Sync</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="w-full flex flex-col md:flex-row h-screen relative md:ml-[260px] md:w-[calc(100%-260px)]">
+        
+        <div class="flex-1 flex flex-col h-full bg-slate-50 relative z-10 no-print">
+            <header class="md:hidden bg-orange-500 text-white p-4 flex justify-between items-center shadow-md shrink-0">
+                <a href="index.html" class="p-2 -ml-2 hover:bg-orange-600 rounded-lg transition"><i data-lucide="arrow-left"></i></a>
+                <h1 class="text-lg font-bold">Menu Kasir</h1>
+                <button onclick="toggleMobileCart()" class="relative p-2">
+                    <i data-lucide="shopping-basket"></i>
+                    <span id="mobile-cart-badge" class="absolute -top-1 -right-1 w-5 h-5 bg-white text-orange-500 text-xs font-bold flex items-center justify-center rounded-full shadow hidden">0</span>
+                </button>
+            </header>
+
+            <div class="p-4 flex space-x-3 shrink-0 bg-white border-b border-slate-100 z-10 shadow-sm relative">
+                <div class="flex-1 bg-slate-50 rounded-xl flex items-center px-4 py-3 border border-slate-200 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-100 transition-all">
+                    <i data-lucide="search" class="text-slate-400 w-5 h-5"></i>
+                    <input type="text" id="search-input" placeholder="Cari nama atau barcode..." class="bg-transparent w-full ml-3 outline-none text-sm font-medium text-slate-700">
+                </div>
+                <button onclick="toggleScanner()" class="bg-slate-900 text-white p-3 rounded-xl shadow-md hover:bg-slate-800 flex items-center justify-center transition"><i data-lucide="scan-line"></i></button>
+            </div>
+
+            <div class="px-4 py-3 bg-white flex space-x-3 overflow-x-auto hide-scrollbar shrink-0 border-b border-slate-100">
+                <button onclick="turboSync()" class="md:hidden px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm border border-emerald-200 whitespace-nowrap flex items-center space-x-1 hover:bg-emerald-100">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Sync</span>
+                </button>
+                <button onclick="changeCategory('Semua', this)" class="cat-btn px-5 py-2 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition">Semua</button>
+                <button onclick="changeCategory('Minuman', this)" class="cat-btn px-5 py-2 rounded-xl bg-slate-50 text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-100 transition">Minuman</button>
+                <button onclick="changeCategory('Snack', this)" class="cat-btn px-5 py-2 rounded-xl bg-slate-50 text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-100 transition">Snack</button>
+                <button onclick="changeCategory('Makanan', this)" class="cat-btn px-5 py-2 rounded-xl bg-slate-50 text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-100 transition">Makanan</button>
+                <button onclick="changeCategory('Kebutuhan', this)" class="cat-btn px-5 py-2 rounded-xl bg-slate-50 text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-100 transition">Kebutuhan</button>
+            </div>
+
+            <div id="product-grid" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 lg:grid-cols-4 gap-4 content-start"></div>
+        </div>
+
+        <div id="cart-overlay" onclick="toggleMobileCart()" class="fixed inset-0 bg-slate-900/40 z-40 hidden md:hidden backdrop-blur-sm transition-opacity no-print"></div>
+
+        <div id="cart-panel" class="fixed bottom-0 left-0 w-full h-[85vh] bg-white rounded-t-3xl shadow-[0_-15px_40px_rgba(0,0,0,0.15)] z-50 flex flex-col transition-transform duration-300 cart-slide-down md:static md:h-full md:w-[360px] md:rounded-none md:shadow-none md:border-l md:border-slate-200 md:translate-y-0 no-print">
+            <div class="w-full flex justify-center py-4 md:hidden cursor-pointer" onclick="toggleMobileCart()"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
+            <div class="px-5 pb-3 md:pt-5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                <h2 class="font-extrabold text-lg text-slate-800">Keranjang</h2>
+                <span id="desktop-item-count" class="bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-lg">0 Item</span>
+            </div>
+            
+            <div id="cart-container" class="flex-1 overflow-y-auto p-5 flex flex-col space-y-3 bg-slate-50"></div>
+
+            <div class="p-5 bg-white border-t border-slate-100 shrink-0">
+                <div class="flex justify-between items-end mb-4">
+                    <span class="text-sm font-bold text-slate-500">Total Tagihan</span>
+                    <span id="total-price" class="text-3xl font-extrabold text-orange-500">Rp 0</span>
+                </div>
+                <button onclick="processPayment()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-slate-800 transition flex justify-center items-center space-x-2">
+                    <i data-lucide="banknote" class="w-5 h-5"></i>
+                    <span class="text-base tracking-wide">Bayar Sekarang</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="product-modal" class="fixed inset-0 bg-slate-900/60 z-[70] hidden flex-col items-center justify-end md:justify-center backdrop-blur-sm transition-opacity no-print">
+            <div class="bg-white w-full md:max-w-md rounded-t-3xl md:rounded-3xl p-6 shadow-2xl relative transform translate-y-full md:translate-y-0 transition-transform duration-300" id="product-modal-content">
+                <button onclick="closeProductModal()" class="absolute top-4 right-4 bg-slate-100 text-slate-500 hover:bg-slate-200 p-2 rounded-full transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <div class="h-48 w-full bg-slate-50 rounded-2xl mb-5 flex items-center justify-center p-4">
+                    <img id="preview-img" src="" class="max-h-full object-contain mix-blend-multiply" alt="Preview">
+                </div>
+                <div class="mb-4">
+                    <span id="preview-category" class="text-[10px] font-bold uppercase tracking-wider text-orange-500 bg-orange-100 px-2 py-1 rounded-md">Kategori</span>
+                    <h2 id="preview-name" class="text-xl font-extrabold text-slate-800 mt-2 leading-tight">Nama Produk</h2>
+                    <p id="preview-barcode" class="text-xs text-slate-500 font-mono mt-1"><i data-lucide="barcode" class="w-3 h-3 inline mr-1"></i>123456789</p>
+                </div>
+                <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Harga Satuan</p>
+                        <p id="preview-price" class="text-lg font-extrabold text-slate-800">Rp 0</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-500 font-medium">Stok Tersedia</p>
+                        <p id="preview-stock" class="text-lg font-extrabold text-emerald-500">0 Pcs</p>
+                    </div>
+                </div>
+                <button id="preview-add-btn" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-slate-800 transition flex justify-center items-center space-x-2">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i><span>Tambah ke Keranjang</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="checkout-modal" class="fixed inset-0 bg-slate-900/80 z-[80] hidden flex-col items-center justify-center p-4 backdrop-blur-md no-print">
+            <div class="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative">
+                <div class="bg-orange-500 p-5 flex justify-between items-center text-white">
+                    <h2 class="font-bold text-lg flex items-center"><i data-lucide="calculator" class="w-5 h-5 mr-2"></i> Pembayaran</h2>
+                    <button onclick="closeCheckout()" class="hover:bg-orange-600 p-1.5 rounded-lg transition"><i data-lucide="x"></i></button>
+                </div>
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-slate-500 font-medium">Total Tagihan</span>
+                        <span id="checkout-total" class="text-2xl font-extrabold text-slate-800">Rp 0</span>
+                    </div>
+                    
+                    <div class="flex space-x-2 mb-5 bg-slate-100 p-1.5 rounded-xl">
+                        <button id="btn-pay-cash" onclick="selectPaymentMethod('Cash')" class="flex-1 py-2.5 bg-white shadow-sm rounded-lg text-sm font-bold text-slate-800 transition">Tunai</button>
+                        <button id="btn-pay-qris" onclick="selectPaymentMethod('QRIS')" class="flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition">QRIS / E-Wallet</button>
+                    </div>
+                    
+                    <hr class="border-dashed border-slate-200 my-4">
+                    
+                    <div id="section-cash" class="block">
+                        <div class="mb-5">
+                            <label class="block text-sm font-bold text-slate-700 mb-2">Uang Diterima (Rp)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
+                                <input type="number" id="cash-input" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-xl font-bold text-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition" placeholder="0" oninput="calculateChange()">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 mb-6" id="quick-cash-buttons"></div>
+                        <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex justify-between items-center mb-6">
+                            <span class="text-emerald-700 font-bold">Kembalian</span>
+                            <span id="checkout-change" class="text-2xl font-extrabold text-emerald-600">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <div id="section-qris" class="hidden flex-col items-center justify-center py-6 mb-2">
+                        <div class="bg-white p-2 border-2 border-slate-200 rounded-2xl shadow-sm mb-3">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" class="w-32 h-32 opacity-80" alt="QRIS">
+                        </div>
+                        <p class="text-sm font-bold text-slate-800">Arahkan pelanggan scan QRIS</p>
+                        <p class="text-[11px] font-medium text-orange-500 mt-1 bg-orange-50 px-3 py-1 rounded-full"><i data-lucide="alert-circle" class="w-3 h-3 inline mr-1"></i>Pastikan saldo masuk sebelum klik Selesai</p>
+                    </div>
+
+                    <button onclick="completeTransaction()" id="btn-complete-pay" class="w-full bg-slate-300 text-slate-500 font-bold py-4 rounded-xl transition flex justify-center items-center pointer-events-none">
+                        <i data-lucide="check-circle" class="w-5 h-5 mr-2"></i><span>Selesaikan Transaksi</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="receipt-modal" class="fixed inset-0 bg-slate-900/80 z-[90] hidden flex-col items-center justify-center p-4 backdrop-blur-md">
+            <div class="bg-white w-full max-w-sm rounded-t-xl rounded-b-md shadow-2xl relative flex flex-col max-h-[90vh]">
+                <div id="receipt-printable-area" class="p-6 overflow-y-auto hide-scrollbar bg-white rounded-t-xl text-sm font-mono text-slate-800">
+                    <div class="text-center mb-4">
+                        <h2 class="font-bold text-lg">POS POCKET STORE</h2>
+                        <p class="text-xs text-slate-500">Jl. Teknologi No.1, Jawa Timur</p>
+                    </div>
+                    <hr class="border-dashed border-slate-300 my-2">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>No: <span id="rcpt-no">INV-123</span></span>
+                        <span id="rcpt-date">15/06/2026</span>
+                    </div>
+                    <div class="flex justify-between text-xs mb-3">
+                        <span>Kasir: Admin</span>
+                        <span>Tunai</span>
+                    </div>
+                    <hr class="border-dashed border-slate-300 my-2">
+                    <div id="rcpt-items" class="space-y-2 mb-3"></div>
+                    <hr class="border-dashed border-slate-300 my-2">
+                    <div class="flex justify-between font-bold mb-1">
+                        <span>TOTAL</span>
+                        <span id="rcpt-total">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500 mb-1">
+                        <span>Tunai</span>
+                        <span id="rcpt-cash">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>Kembali</span>
+                        <span id="rcpt-change">Rp 0</span>
+                    </div>
+                    <hr class="border-dashed border-slate-300 my-4">
+                    <div class="text-center text-xs text-slate-500">
+                        <p>Terima Kasih atas kunjungan Anda!</p>
+                        <i data-lucide="pocket" class="w-6 h-6 mx-auto mt-2 opacity-30"></i>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-100 rounded-b-md flex space-x-3 no-print border-t border-slate-200">
+                    <button onclick="window.print()" class="flex-1 bg-white border border-slate-300 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition flex items-center justify-center">
+                        <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak
+                    </button>
+                    <button onclick="closeReceipt()" class="flex-1 bg-orange-500 text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Selesai
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="scanner-modal" class="fixed inset-0 bg-slate-900/95 z-[60] hidden flex-col items-center justify-center p-5 backdrop-blur-md no-print">
+            <div class="bg-white p-5 rounded-[28px] w-full max-w-sm shadow-2xl relative">
+                <button onclick="toggleScanner()" class="absolute -top-14 right-0 text-white bg-slate-800/80 hover:bg-slate-800 p-3 rounded-full backdrop-blur-sm transition"><i data-lucide="x"></i></button>
+                <div class="text-center mb-5">
+                    <h3 class="font-extrabold text-lg text-slate-800">Scan Barcode</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-1">Posisikan barcode di dalam kotak</p>
+                </div>
+                <div id="reader" class="bg-slate-100 h-64 rounded-2xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden relative">
+                    <i data-lucide="camera" class="text-slate-300 w-12 h-12"></i>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="js/db.js"></script> 
+    <script src="js/sync.js"></script> 
+    <script src="js/pages/pos.js"></script> 
+    <script src="js/app.js"></script> 
+    <script>lucide.createIcons();</script>
+</body>
+</html>
