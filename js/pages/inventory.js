@@ -2,6 +2,7 @@
 
 let currentCategoryFilter = 'Semua';
 let formBarcodeScanner = null;
+let bulkPrintData = []; // Variabel khusus untuk menampung data cetak massal
 
 function imgErrorLocal(image) {
     image.onerror = "";
@@ -9,41 +10,31 @@ function imgErrorLocal(image) {
     return true;
 }
 
-// ==========================================
-// FITUR BARU: GENERATE TAB KATEGORI OTOMATIS
-// ==========================================
+// 1. Generate Kategori Otomatis
 async function generateCategoryTabs() {
     try {
         const products = await db.products.toArray();
-        // Ambil semua kategori unik dari database
         const uniqueCategories = [...new Set(products.map(p => p.category))].filter(Boolean);
         
         const tabsContainer = document.getElementById('category-tabs');
         if (!tabsContainer) return;
 
-        // Reset isi tab, mulai dengan tab 'Semua'
         tabsContainer.innerHTML = `<button onclick="filterInventory('Semua', this)" class="inv-cat-btn px-5 py-2 rounded-xl ${currentCategoryFilter === 'Semua' ? 'bg-orange-500 text-white' : 'bg-white text-slate-600'} font-bold text-sm shadow-sm whitespace-nowrap transition">Semua</button>`;
 
-        // Tambahkan tab untuk setiap kategori unik
         uniqueCategories.forEach(cat => {
             const isActive = currentCategoryFilter === cat;
             tabsContainer.innerHTML += `<button onclick="filterInventory('${cat}', this)" class="inv-cat-btn px-5 py-2 rounded-xl ${isActive ? 'bg-orange-500 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200'} font-medium text-sm whitespace-nowrap hover:bg-slate-50 transition">${cat}</button>`;
         });
 
-        // Update juga opsi di Datalist Form
         const datalist = document.getElementById('category-options');
         if (datalist) {
             datalist.innerHTML = '';
-            uniqueCategories.forEach(cat => {
-                datalist.innerHTML += `<option value="${cat}"></option>`;
-            });
+            uniqueCategories.forEach(cat => { datalist.innerHTML += `<option value="${cat}"></option>`; });
         }
-    } catch (error) {
-        console.error("Gagal generate kategori:", error);
-    }
+    } catch (error) { console.error(error); }
 }
 
-// 1. Memuat dan Merender List Inventori
+// 2. Render List Inventori Utama
 async function renderInventoryList(category = 'Semua', keyword = '') {
     const listContainer = document.getElementById('inventory-list');
     if (!listContainer) return;
@@ -63,18 +54,13 @@ async function renderInventoryList(category = 'Semua', keyword = '') {
         listContainer.innerHTML = '';
 
         if (filteredProducts.length === 0) {
-            listContainer.innerHTML = `
-                <div class="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm">
-                    <p class="text-slate-400 text-sm font-medium">Tidak ada produk dalam daftar inventori ini.</p>
-                </div>`;
+            listContainer.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm"><p class="text-slate-400 text-sm font-medium">Tidak ada produk.</p></div>`;
             return;
         }
 
         filteredProducts.forEach(p => {
             const itemRow = document.createElement('div');
-            
-            let stockColorClass = "text-emerald-500";
-            let stockLabel = "Pcs";
+            let stockColorClass = "text-emerald-500"; let stockLabel = "Pcs";
             if (p.stock <= 0) { stockColorClass = "text-rose-500 font-extrabold"; stockLabel = "Habis"; } 
             else if (p.stock <= 5) { stockColorClass = "text-orange-500 font-bold"; stockLabel = "Menipis"; }
 
@@ -100,49 +86,34 @@ async function renderInventoryList(category = 'Semua', keyword = '') {
             listContainer.appendChild(itemRow);
         });
         lucide.createIcons();
-    } catch (error) {
-        console.error("Gagal memuat daftar inventori:", error);
-    }
+    } catch (error) { console.error(error); }
 }
 
-// 2. Kontrol Filter Kategori
 function filterInventory(category, btnElement) {
     currentCategoryFilter = category;
     const buttons = document.querySelectorAll('.inv-cat-btn');
-    buttons.forEach(btn => {
-        btn.className = 'inv-cat-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition';
-    });
-    if(btnElement) {
-        btnElement.className = 'inv-cat-btn px-5 py-2 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition';
-    }
-    
+    buttons.forEach(btn => btn.className = 'inv-cat-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition');
+    if(btnElement) btnElement.className = 'inv-cat-btn px-5 py-2 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition';
     const searchVal = document.getElementById('search-inventory')?.value || '';
     renderInventoryList(category, searchVal);
 }
 
-// 3. Kontrol Modal Form (Tambah / Edit)
+// 3. Modal Edit / Tambah
 function openFormModal(product = null) {
     const modal = document.getElementById('product-form-modal');
     const formTitle = document.getElementById('modal-form-title');
     const deleteBtn = document.getElementById('btn-delete-product');
     const printQrBtn = document.getElementById('btn-print-qr');
     
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
     document.getElementById('form-file-upload').value = "";
-
-    // Buka kunci tombol jika sebelumnya error
     const btnSubmit = document.querySelector('#product-main-form button[type="submit"]');
-    btnSubmit.disabled = false;
-    btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
+    btnSubmit.disabled = false; btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
 
     if (product) {
         formTitle.innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 mr-2 text-orange-500"></i> Edit Detail Produk`;
-        deleteBtn.classList.remove('hidden');
-        deleteBtn.classList.add('flex');
-        printQrBtn.classList.remove('hidden'); 
-        printQrBtn.classList.add('flex');      
-
+        deleteBtn.classList.remove('hidden'); deleteBtn.classList.add('flex');
+        printQrBtn.classList.remove('hidden'); printQrBtn.classList.add('flex');      
         document.getElementById('form-product-id').value = product.id;
         document.getElementById('form-name').value = product.name;
         document.getElementById('form-barcode').value = product.barcode;
@@ -152,11 +123,8 @@ function openFormModal(product = null) {
         document.getElementById('form-image').value = product.image_url || '';
     } else {
         formTitle.innerHTML = `<i data-lucide="box" class="w-5 h-5 mr-2 text-orange-500"></i> Tambah Produk Baru`;
-        deleteBtn.classList.remove('flex');
-        deleteBtn.classList.add('hidden');
-        printQrBtn.classList.remove('flex');   
-        printQrBtn.classList.add('hidden');    
-        
+        deleteBtn.classList.remove('flex'); deleteBtn.classList.add('hidden');
+        printQrBtn.classList.remove('flex'); printQrBtn.classList.add('hidden');    
         document.getElementById('product-main-form').reset();
         document.getElementById('form-product-id').value = '';
         document.getElementById('form-image').value = '';
@@ -165,65 +133,43 @@ function openFormModal(product = null) {
 }
 
 function closeFormModal() {
-    const modal = document.getElementById('product-form-modal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    if (formBarcodeScanner) {
-        formBarcodeScanner.stop().catch(e => console.log(e));
-    }
+    document.getElementById('product-form-modal').classList.add('hidden');
+    document.getElementById('product-form-modal').classList.remove('flex');
+    if (formBarcodeScanner) formBarcodeScanner.stop().catch(e => {});
 }
 
-// 4. PERBAIKAN: Kamera Scanner (30 FPS & Bentuk Persegi Panjang)
+// 4. Scanner Kamera 30FPS
 function toggleFormScanner() {
     const modal = document.getElementById('form-scanner-modal');
-    
     if (modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        
+        modal.classList.remove('hidden'); modal.classList.add('flex');
         formBarcodeScanner = new Html5Qrcode("form-reader");
-        formBarcodeScanner.start(
-            { facingMode: "environment" }, 
-            { 
-                fps: 30, // Dipercepat 3x lipat
-                qrbox: { width: 280, height: 120 }, // Bentuk persegi panjang standar barcode
-                aspectRatio: 1.0 
-            }, 
+        formBarcodeScanner.start({ facingMode: "environment" }, { fps: 30, qrbox: { width: 280, height: 120 }, aspectRatio: 1.0 }, 
             (decodedText) => {
                 document.getElementById('form-barcode').value = decodedText;
                 formBarcodeScanner.stop();
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            },
-            (errorMessage) => {}
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+            }, (errorMessage) => {}
         ).catch((err) => {
-            alert("Akses kamera ditolak atau tidak ditemukan.");
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            alert("Akses kamera ditolak.");
+            modal.classList.add('hidden'); modal.classList.remove('flex');
         });
     } else {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        if(formBarcodeScanner) formBarcodeScanner.stop().catch(e => console.log(e));
+        modal.classList.add('hidden'); modal.classList.remove('flex');
+        if(formBarcodeScanner) formBarcodeScanner.stop().catch(e => {});
     }
 }
 
-// 5. PERBAIKAN: Kunci Tombol Sepenuhnya Saat Upload Foto
+// 5. Upload Foto ke Cloud
 async function uploadPhotoToDrive() {
     const fileInput = document.getElementById('form-file-upload');
     const imageInput = document.getElementById('form-image');
     const btnSubmit = document.querySelector('#product-main-form button[type="submit"]');
     
     if (fileInput.files.length === 0) return;
-    if (!navigator.onLine) {
-        alert("❌ Harus online untuk mengupload gambar.");
-        fileInput.value = "";
-        return;
-    }
+    if (!navigator.onLine) { alert("Harus online untuk upload gambar."); return; }
 
-    // KUNCI TOMBOL SECARA INSTAN
-    btnSubmit.disabled = true;
-    btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
+    btnSubmit.disabled = true; btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
     const originalText = btnSubmit.innerHTML;
     btnSubmit.innerHTML = '<i class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2 inline-block"></i> Uploading...';
 
@@ -233,224 +179,245 @@ async function uploadPhotoToDrive() {
     const reader = new FileReader();
     reader.onload = async function(e) {
         const base64Image = e.target.result;
-        imageInput.value = "Sedang mengirim ke Google Drive (Mohon tunggu)...";
+        imageInput.value = "Sedang mengirim ke Google Drive...";
         try {
             const response = await fetch(SHEET_URL, {
                 method: 'POST',
-                body: JSON.stringify({
-                    action: 'upload_image',
-                    image: base64Image,
-                    mimeType: file.type,
-                    fileName: 'PROD_' + new Date().getTime() + '_' + file.name,
-                    subFolder: 'Produk'
-                }),
+                body: JSON.stringify({ action: 'upload_image', image: base64Image, mimeType: file.type, fileName: 'PROD_' + new Date().getTime(), subFolder: 'Produk' }),
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             });
-            
             const result = await response.json();
-            if (result.status === 'success') {
-                imageInput.value = result.url;
-            } else {
-                alert("Gagal mengupload gambar.");
-                imageInput.value = "";
-            }
-        } catch (error) {
-            console.error(error);
-            alert("Gangguan jaringan. Gagal upload.");
-            imageInput.value = "";
-        } finally {
-            // BUKA KUNCI TOMBOL SETELAH SELESAI
+            if (result.status === 'success') imageInput.value = result.url;
+            else alert("Gagal mengupload gambar.");
+        } catch (error) { alert("Gangguan jaringan."); imageInput.value = ""; } 
+        finally {
             btnSubmit.innerHTML = originalText;
-            btnSubmit.disabled = false;
-            btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
+            btnSubmit.disabled = false; btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
         }
     };
     reader.readAsDataURL(file); 
 }
 
-// 6. PERBAIKAN: Pengaman Ganda Pada Simpan Form
+// 6. Simpan Form (Update Lokal + Sheet)
 async function saveProductForm(e) {
     e.preventDefault();
-
-    // Cek pengaman ganda: Pastikan gambar tidak dalam status loading
-    const imageVal = document.getElementById('form-image').value;
-    if (imageVal.includes("Sedang")) {
-        alert("Harap tunggu hingga proses upload gambar selesai!");
-        return;
-    }
+    if (document.getElementById('form-image').value.includes("Sedang")) return alert("Harap tunggu hingga upload selesai!");
 
     const id = document.getElementById('form-product-id').value;
-    const name = document.getElementById('form-name').value;
-    const barcode = String(document.getElementById('form-barcode').value).trim();
-    const category = document.getElementById('form-category').value.trim(); // Trim untuk kategori kustom
-    const price = parseInt(document.getElementById('form-price').value) || 0;
-    const stock = parseInt(document.getElementById('form-stock').value) || 0;
-    const image_url = imageVal || "https://images.unsplash.com/photo-1584824486509-112e4181f1b6?w=200";
-
-    const finalId = id || ('P' + new Date().getTime().toString().slice(-4));
-    const productData = { id: finalId, barcode, name, category, price, stock, image_url };
+    const productData = { 
+        id: id || ('P' + new Date().getTime().toString().slice(-4)), 
+        barcode: String(document.getElementById('form-barcode').value).trim(), 
+        name: document.getElementById('form-name').value, 
+        category: document.getElementById('form-category').value.trim(), 
+        price: parseInt(document.getElementById('form-price').value) || 0, 
+        stock: parseInt(document.getElementById('form-stock').value) || 0, 
+        image_url: document.getElementById('form-image').value || "https://images.unsplash.com/photo-1584824486509-112e4181f1b6?w=200" 
+    };
 
     const btnSubmit = document.querySelector('#product-main-form button[type="submit"]');
     const originalText = btnSubmit.innerHTML;
 
     try {
         if (navigator.onLine) {
-            btnSubmit.innerHTML = 'Menyinkronkan ke Cloud...';
-            btnSubmit.disabled = true;
-
+            btnSubmit.innerHTML = 'Menyinkronkan ke Cloud...'; btnSubmit.disabled = true;
             const response = await fetch(SHEET_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'save_product', product: productData }),
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                method: 'POST', body: JSON.stringify({ action: 'save_product', product: productData }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             });
-
             const result = await response.json();
-            if (result.status !== 'success') {
-                throw new Error(result.message || "Google Sheets menolak menyimpan data.");
-            }
+            if (result.status !== 'success') throw new Error(result.message || "Ditolak sistem cloud.");
         }
 
-        if (id) await db.products.update(id, productData);
-        else await db.products.add(productData);
+        if (id) await db.products.update(id, productData); else await db.products.add(productData);
 
-        closeFormModal();
-        
-        // Perbarui Tab Kategori jika ada kategori baru
-        await generateCategoryTabs();
-        
-        const searchVal = document.getElementById('search-inventory')?.value || '';
-        renderInventoryList(currentCategoryFilter, searchVal);
-
-    } catch (error) {
-        console.error("Detail Kegagalan:", error);
-        alert("❌ Gagal Menyimpan!\n\nPastikan Anda sudah klik Turbo Sync sebelumnya, atau cek koneksi internet.");
-    } finally {
-        btnSubmit.innerHTML = originalText;
-        btnSubmit.disabled = false;
-    }
+        closeFormModal(); await generateCategoryTabs();
+        renderInventoryList(currentCategoryFilter, document.getElementById('search-inventory')?.value || '');
+    } catch (error) { alert("❌ Gagal Menyimpan! Pastikan Turbo Sync sudah diklik."); } 
+    finally { btnSubmit.innerHTML = originalText; btnSubmit.disabled = false; }
 }
 
-// 7. Proses Hapus Produk Lokal
 async function deleteProductForm() {
     const id = document.getElementById('form-product-id').value;
-    if (!id) return;
-
-    if (confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
-        try {
-            await db.products.delete(id);
-            closeFormModal();
-            await generateCategoryTabs();
-            renderInventoryList(currentCategoryFilter);
-        } catch (error) { console.error(error); }
+    if (id && confirm("Hapus produk ini?")) {
+        await db.products.delete(id); closeFormModal(); await generateCategoryTabs(); renderInventoryList(currentCategoryFilter);
     }
 }
 
 // ==========================================
-// FITUR BARU: CETAK LABEL QR CODE PRODUK (Support 58mm & A4)
+// FITUR BARU: MODAL CETAK MASSAL
 // ==========================================
-function printProductQR() {
-    const name = document.getElementById('form-name').value;
-    const barcode = document.getElementById('form-barcode').value;
-    const price = document.getElementById('form-price').value;
-
-    if (!barcode) return alert("Barcode tidak boleh kosong!");
-
-    const tempContainer = document.createElement('div');
+async function openBulkPrintModal() {
+    const modal = document.getElementById('bulk-print-modal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+    document.getElementById('search-bulk-print').value = '';
     
-    new QRCode(tempContainer, {
-        text: barcode,
-        width: 150,
-        height: 150,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-    });
+    // Ambil semua data dan set jumlah cetak awal (0 = tidak dipilih)
+    const products = await db.products.toArray();
+    bulkPrintData = products.map(p => ({ ...p, printQty: 0 }));
+    
+    renderBulkPrintList();
+    updateBulkTotal();
+}
 
-    setTimeout(() => {
-        const qrCanvas = tempContainer.querySelector('canvas');
-        const qrImageSrc = qrCanvas.toDataURL("image/png");
+function closeBulkPrintModal() {
+    document.getElementById('bulk-print-modal').classList.add('hidden');
+    document.getElementById('bulk-print-modal').classList.remove('flex');
+}
 
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html>
-            <head>
-                <title>Label_QR_${barcode}</title>
-                <style>
-                    /* CSS Tampilan Web (Sebelum Print) */
-                    body { font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #f8fafc; margin: 0; }
-                    .label-container { background: white; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 16px; text-align: center; width: 220px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-                    .label-name { font-size: 14px; font-weight: 800; color: #1e293b; margin-bottom: 10px; line-height: 1.2; text-transform: uppercase; }
-                    .label-qr { width: 150px; height: 150px; margin: 0 auto; border: 1px solid #f1f5f9; padding: 5px; border-radius: 8px; }
-                    .label-bc { font-size: 10px; color: #64748b; font-family: monospace; margin-top: 5px; letter-spacing: 1px; }
-                    .label-price { font-size: 20px; font-weight: 900; color: #000; margin-top: 10px; }
-                    .print-btn { background: #0f172a; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 20px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; }
-                    .print-btn:hover { background: #334155; }
-                    .info-text { font-size: 11px; color: #64748b; margin-bottom: 20px; max-width: 300px; text-align: center; }
-                    
-                    /* CSS Khusus Printer (A4 & Thermal 58mm) */
-                    @media print {
-                        @page { 
-                            margin: 2mm; /* Margin minimal agar thermal tidak terpotong */
-                        }
-                        body { 
-                            background: white; 
-                            padding: 0; 
-                            margin: 0; 
-                            display: block; /* Matikan flex agar A4 mencetak dari pojok kiri atas */
-                        }
-                        .print-btn, .info-text { display: none; }
-                        
-                        .label-container { 
-                            border: 1px solid #000; /* Garis batas potong stiker */
-                            box-shadow: none; 
-                            padding: 2mm; 
-                            width: 46mm; /* Area cetak aman untuk printer 58mm */
-                            max-width: 100%;
-                            border-radius: 2mm; 
-                            margin: 0;
-                            page-break-inside: avoid;
-                        }
-                        .label-name { font-size: 11px; margin-bottom: 3mm; color: #000; font-weight: bold; }
-                        .label-qr { width: 36mm; height: 36mm; padding: 0; border: none; display: block; margin: 0 auto; }
-                        .label-bc { font-size: 9px; color: #000; margin-top: 1mm; }
-                        .label-price { font-size: 14px; margin-top: 2mm; color: #000; font-weight: bold; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="info-text">Silakan pilih ukuran kertas pada dialog print. Pilih <b>Roll Paper 58mm</b> untuk printer kasir, atau <b>A4</b> untuk printer biasa.</div>
-                <button class="print-btn" onclick="window.print()">Cetak Label Sekarang</button>
-                <div class="label-container">
-                    <div class="label-name">${name}</div>
-                    <img src="${qrImageSrc}" class="label-qr" alt="QR Code" />
-                    <div class="label-bc">${barcode}</div>
-                    <div class="label-price">Rp ${Number(price).toLocaleString('id-ID')}</div>
+function renderBulkPrintList(keyword = '') {
+    const list = document.getElementById('bulk-print-list');
+    list.innerHTML = '';
+    
+    const filtered = bulkPrintData.filter(p => p.name.toLowerCase().includes(keyword.toLowerCase()) || String(p.barcode).includes(keyword));
+    
+    filtered.forEach(p => {
+        const isSelected = p.printQty > 0;
+        list.innerHTML += `
+            <div class="flex items-center justify-between p-3 border border-slate-100 rounded-xl mb-2 ${isSelected ? 'bg-blue-50 border-blue-200' : 'bg-white hover:bg-slate-50'} transition cursor-pointer" onclick="toggleBulkItem('${p.barcode}')">
+                <div class="flex items-center space-x-3">
+                    <div class="w-5 h-5 rounded flex items-center justify-center border ${isSelected ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-300'}">
+                        ${isSelected ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-800 line-clamp-1">${p.name}</p>
+                        <p class="text-[10px] text-slate-500 font-mono">BC: ${p.barcode}</p>
+                    </div>
                 </div>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-        
-        printWindow.onload = function() {
-            printWindow.focus();
-        };
-    }, 300);
+                <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+                    <button onclick="updateBulkQty('${p.barcode}', -1)" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-100 shadow-sm"><i data-lucide="minus" class="w-3 h-3"></i></button>
+                    <input type="number" value="${p.printQty}" class="w-10 h-8 text-center text-sm font-bold text-slate-800 bg-transparent border-none outline-none" readonly>
+                    <button onclick="updateBulkQty('${p.barcode}', 1)" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-100 shadow-sm"><i data-lucide="plus" class="w-3 h-3"></i></button>
+                </div>
+            </div>
+        `;
+    });
+    lucide.createIcons();
+}
+
+function toggleBulkItem(barcode) {
+    const item = bulkPrintData.find(p => p.barcode === String(barcode));
+    if (item) {
+        item.printQty = item.printQty > 0 ? 0 : 1;
+        renderBulkPrintList(document.getElementById('search-bulk-print').value);
+        updateBulkTotal();
+    }
+}
+
+function updateBulkQty(barcode, change) {
+    const item = bulkPrintData.find(p => p.barcode === String(barcode));
+    if (item) {
+        item.printQty += change;
+        if (item.printQty < 0) item.printQty = 0;
+        renderBulkPrintList(document.getElementById('search-bulk-print').value);
+        updateBulkTotal();
+    }
+}
+
+function updateBulkTotal() {
+    const total = bulkPrintData.reduce((sum, item) => sum + item.printQty, 0);
+    document.getElementById('bulk-total-labels').textContent = total;
+}
+
+// Eksekusi Cetak Massal (Memproses Data ke Kertas Cetak)
+async function executeBulkPrint() {
+    const itemsToPrint = bulkPrintData.filter(p => p.printQty > 0);
+    if (itemsToPrint.length === 0) return alert("Pilih minimal satu barang untuk dicetak.");
+
+    let htmlLabels = '';
+
+    // Mencegah layar "freeze" dengan memproses QR secara asinkron
+    for (let item of itemsToPrint) {
+        for (let i = 0; i < item.printQty; i++) {
+            const qrDiv = document.createElement('div');
+            new QRCode(qrDiv, { text: item.barcode, width: 150, height: 150, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+            
+            // Beri jeda sangat singkat agar canvas sempat tergambar di memori browser
+            await new Promise(r => setTimeout(r, 10)); 
+            const qrImageSrc = qrDiv.querySelector('canvas').toDataURL("image/png");
+
+            htmlLabels += `
+                <div class="label-container">
+                    <div class="label-name">${item.name}</div>
+                    <img src="${qrImageSrc}" class="label-qr" alt="QR Code" />
+                    <div class="label-bc">${item.barcode}</div>
+                    <div class="label-price">Rp ${Number(item.price).toLocaleString('id-ID')}</div>
+                </div>
+            `;
+        }
+    }
+
+    const totalLabels = itemsToPrint.reduce((sum, item) => sum + item.printQty, 0);
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Cetak Massal Label QR</title>
+            <style>
+                body { font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; padding: 20px; background: #f8fafc; margin: 0; }
+                .label-container { background: white; border: 2px dashed #cbd5e1; padding: 15px; border-radius: 16px; text-align: center; width: 180px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+                .label-name { font-size: 12px; font-weight: 800; color: #1e293b; margin-bottom: 8px; line-height: 1.2; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .label-qr { width: 120px; height: 120px; margin: 0 auto; border: 1px solid #f1f5f9; padding: 5px; border-radius: 8px; }
+                .label-bc { font-size: 10px; color: #64748b; font-family: monospace; margin-top: 5px; letter-spacing: 1px; }
+                .label-price { font-size: 16px; font-weight: 900; color: #000; margin-top: 8px; }
+                .print-btn-wrapper { width: 100%; display: flex; justify-content: center; margin-bottom: 20px; flex-direction: column; align-items: center; }
+                .print-btn { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 14px; box-shadow: 0 4px 6px rgba(37,99,235,0.2); transition: 0.2s; }
+                .print-btn:hover { background: #1d4ed8; }
+                .info-text { font-size: 11px; color: #64748b; margin-bottom: 10px; text-align: center; max-width: 400px; }
+                
+                @media print {
+                    @page { margin: 2mm; }
+                    body { background: white; padding: 0; margin: 0; gap: 2mm; justify-content: flex-start; }
+                    .print-btn-wrapper { display: none; }
+                    
+                    /* Kompatibel A4 Grid (Flex) & 58mm Thermal */
+                    .label-container { 
+                        border: 1px solid #000; box-shadow: none; padding: 2mm; 
+                        width: 46mm; max-width: 100%; border-radius: 2mm; 
+                        margin: 0; page-break-inside: avoid;
+                    }
+                    .label-name { font-size: 10px; margin-bottom: 2mm; color: #000; font-weight: bold; white-space: normal; overflow: visible; }
+                    .label-qr { width: 34mm; height: 34mm; padding: 0; border: none; display: block; margin: 0 auto; }
+                    .label-bc { font-size: 9px; color: #000; margin-top: 1mm; }
+                    .label-price { font-size: 13px; margin-top: 2mm; color: #000; font-weight: bold; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="print-btn-wrapper">
+                <div class="info-text">Silakan pilih ukuran kertas pada dialog print. Label akan secara otomatis berjajar (grid) jika Anda menggunakan kertas A4, atau tersusun vertikal jika menggunakan Printer Kasir 58mm.</div>
+                <button class="print-btn" onclick="window.print()">Cetak ${totalLabels} Label Sekarang</button>
+            </div>
+            ${htmlLabels}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = function() { printWindow.focus(); };
+}
+
+// 7. Cetak Label Tunggal (Dari Modal Edit)
+function printProductQR() {
+    const barcode = document.getElementById('form-barcode').value;
+    if (!barcode) return alert("Barcode tidak boleh kosong!");
+    
+    // Meminjam logika cetak massal agar desain konsisten
+    bulkPrintData = [{
+        name: document.getElementById('form-name').value,
+        barcode: barcode,
+        price: document.getElementById('form-price').value,
+        printQty: 1
+    }];
+    executeBulkPrint();
 }
 
 // ==========================================
-// FIX BUG BLANK ON LOAD: Memastikan DB Siap Sebelum Render
+// Inisialisasi Halaman
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     if (typeof db !== 'undefined') {
-        // Tunggu sedikit agar Dexie siap (opsional untuk perangkat lambat)
         setTimeout(async () => {
             await generateCategoryTabs();
-            
-            // Set paksa tombol 'Semua' aktif secara visual
             const allBtn = document.querySelector('.inv-cat-btn');
-            if(allBtn) filterInventory('Semua', allBtn);
-            else renderInventoryList('Semua');
-            
+            if(allBtn) filterInventory('Semua', allBtn); else renderInventoryList('Semua');
         }, 100);
 
         document.getElementById('search-inventory')?.addEventListener('input', (e) => {
