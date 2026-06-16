@@ -3,11 +3,11 @@
 // Inisialisasi Database Local menggunakan Dexie
 const db = new Dexie("POSPocketDB");
 
-// Skema Database (Menggunakan versi 2 agar me-reset/menimpa versi sebelumnya)
-db.version(2).stores({
+// Skema Database (Naikkan ke Versi 3 untuk menambahkan kolom amount_paid, change, dan name)
+db.version(3).stores({
     products: 'id, barcode, name, category, price, stock, image_url',
-    sales: '++id, receipt_no, date, total, payment_method, sync_status', 
-    sale_items: '++id, sale_id, product_id, qty, price, subtotal',
+    sales: '++id, receipt_no, date, total, payment_method, amount_paid, change, sync_status', 
+    sale_items: '++id, sale_id, product_id, name, qty, price, subtotal',
     suppliers: '++id, name, phone, address',
     employees: 'id, name, role, division',
     attendance: '++id, employee_id, date, check_in, status, sync_status',
@@ -24,7 +24,7 @@ db.on('populate', function () {
             category: "Beverages", 
             price: 15000, 
             stock: 50, 
-            image_url: "https://images.unsplash.com/photo-1622543925917-763c34d1a86e?w=200" 
+            image_url: "https://lh3.googleusercontent.com/d/1MxWuHNDOlDcHKBT2Id-Jo6COZFSHnHoa" 
         },
         { 
             id: "P002", 
@@ -33,7 +33,7 @@ db.on('populate', function () {
             category: "Beverages", 
             price: 5000, 
             stock: 100, 
-            image_url: "https://images.unsplash.com/photo-1548839140-29a749e1bc5e?w=200" 
+            image_url: "https://lh3.googleusercontent.com/d/1SiIwqPy4q6f25CzmkR3qYDmCN991nFZM" 
         },
         { 
             id: "P003", 
@@ -42,7 +42,7 @@ db.on('populate', function () {
             category: "Snacks", 
             price: 12000, 
             stock: 30, 
-            image_url: "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=200" 
+            image_url: "https://lh3.googleusercontent.com/d/1A2_KYyqhxRWcGNi-1KAEcMQxy4clP5yT" 
         },
         { 
             id: "P004", 
@@ -51,7 +51,7 @@ db.on('populate', function () {
             category: "Snacks", 
             price: 8500, 
             stock: 45, 
-            image_url: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=200" 
+            image_url: "https://lh3.googleusercontent.com/d/1IOMeyvPPYORPcldVrqmcZbPIWCJyUG22" 
         }
     ]);
 });
