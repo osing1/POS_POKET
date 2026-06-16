@@ -3,70 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POS Pocket - Dashboard</title>
+    <title>POS Pocket - Inventori</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root {
-            --primary: #ff5722;
-            --navy: #0f172a;
-            --bg-body: #f8fafc;
-        }
-        body { 
-            background-color: var(--bg-body); 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            overflow-x: hidden; 
-        }
-        
-        /* Background Atas Melengkung */
-        .bg-header-curve {
-            background: linear-gradient(135deg, #ff7043 0%, #ff5722 100%);
-            border-bottom-left-radius: 35px;
-            border-bottom-right-radius: 35px;
-        }
-
-        /* Glassmorphism & Glossy Card */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05);
-            border-radius: 16px;
-        }
-        
-        /* 3D Icon Simulation */
-        .icon-3d {
-            filter: drop-shadow(0px 6px 4px rgba(0,0,0,0.1));
-            transform: translateZ(0);
-        }
-
-        /* Navigasi Bawah & Tombol Sale Mengambang (Hanya Mobile) */
-        .bottom-nav {
-            box-shadow: 0 -4px 25px rgba(0,0,0,0.06);
-            border-top-left-radius: 24px;
-            border-top-right-radius: 24px;
-        }
-        .btn-sale-float {
-            background: linear-gradient(135deg, #ff7043, #ff5722);
-            transform: translateY(-20px);
-            box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4);
-            border: 4px solid white;
-        }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 4px 15px -5px rgba(0, 0, 0, 0.05); border-radius: 16px; }
+        .bottom-nav { box-shadow: 0 -4px 25px rgba(0,0,0,0.06); border-top-left-radius: 24px; border-top-right-radius: 24px; }
+        .btn-sale-float { background: linear-gradient(135deg, #ff7043, #ff5722); transform: translateY(-20px); box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4); border: 4px solid white; }
+        #form-reader { width: 100%; border-radius: 20px; overflow: hidden; border: none !important; box-shadow: inset 0px 0px 20px rgba(0,0,0,0.5); background: #000; }
+        #form-reader video { object-fit: cover; border-radius: 20px; }
+        #form-reader img { display: none !important; } 
+        #qr-shaded-region { border-color: rgba(0, 0, 0, 0.7) !important; }
     </style>
 </head>
 <body class="flex text-slate-800 pb-24 md:pb-0">
 
     <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden border-r border-slate-800">
-        <div class="p-6 flex items-center space-x-3 border-b border-slate-800/80 bg-slate-900">
-            <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg">
-                <i data-lucide="pocket" class="text-white"></i>
-            </div>
+        <div class="p-6 flex items-center space-x-3 border-b border-slate-800 bg-slate-900">
+            <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg"><i data-lucide="pocket" class="text-white"></i></div>
             <h2 class="text-2xl font-extrabold tracking-wide">POS Pocket</h2>
         </div>
-        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6">
-            <a href="index.html" class="flex items-center space-x-3 bg-slate-800/80 text-orange-400 p-3.5 rounded-xl border border-slate-700 shadow-sm"><i data-lucide="home"></i> <span class="font-bold">Beranda</span></a>
-            <a href="inventory.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="package"></i> <span class="font-medium">Inventori</span></a>
+        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6 hide-scrollbar">
+            <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="home"></i> <span class="font-medium">Beranda</span></a>
+            <a href="inventory.html" class="flex items-center space-x-3 bg-slate-800/80 text-orange-400 p-3.5 rounded-xl border border-slate-700 shadow-sm"><i data-lucide="package"></i> <span class="font-bold">Inventori</span></a>
             <a href="sale.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="scan-barcode"></i> <span class="font-medium">Kasir / POS</span></a>
             <a href="supplier.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="truck"></i> <span class="font-medium">Supplier</span></a>
             <a href="hrm.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="users"></i> <span class="font-medium">Manajemen HRM</span></a>
@@ -79,147 +43,146 @@
         </div>
     </aside>
 
-    <main class="w-full min-h-screen relative md:ml-[260px] md:w-[calc(100%-260px)]">
-        
-        <div class="absolute top-0 left-0 w-full h-64 md:h-60 bg-header-curve z-0"></div>
-
-        <div class="relative z-10 px-5 pt-6 max-w-5xl mx-auto">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center space-x-3 bg-white/20 backdrop-blur-md p-1.5 pr-5 rounded-full border border-white/30 shadow-sm cursor-pointer hover:bg-white/30 transition">
-                    <div class="w-11 h-11 bg-slate-900 rounded-full flex items-center justify-center overflow-hidden border-2 border-white">
-                        <i data-lucide="user" class="text-white w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <p class="text-[11px] text-white/90 font-medium" data-lang="hello">Halo,</p>
-                        <h1 class="text-sm font-bold text-white tracking-wide">Administrator</h1>
-                    </div>
-                </div>
-                <button class="relative p-2.5 text-white bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-sm transition border border-white/20 shadow-sm">
-                    <i data-lucide="bell" class="w-5 h-5"></i>
-                    <span class="absolute top-2 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-orange-500"></span>
+    <main class="w-full min-h-screen relative md:ml-[260px] md:w-[calc(100%-260px)] bg-slate-50">
+        <header class="bg-white p-5 flex justify-between items-center shadow-sm sticky top-0 z-40 border-b border-slate-100">
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800">Inventori</h1>
+                <p class="text-xs font-medium text-slate-500">Kelola stok produk</p>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="openBulkPrintModal()" class="bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 p-2.5 rounded-xl shadow-sm transition flex items-center font-bold text-sm">
+                    <i data-lucide="printer" class="w-4 h-4 md:mr-2"></i>
+                    <span class="hidden md:inline">Cetak Massal</span>
+                </button>
+                <button onclick="openFormModal()" class="bg-orange-500 hover:bg-orange-600 text-white p-2.5 rounded-xl shadow-md transition flex items-center space-x-2 font-bold text-sm">
+                    <i data-lucide="plus" class="w-4 h-4 md:mr-2"></i>
+                    <span class="hidden md:inline">Tambah Produk</span>
                 </button>
             </div>
+        </header>
 
-            <div class="bg-white rounded-2xl p-3.5 flex items-center space-x-3 shadow-sm mb-5 border border-slate-100">
-                <div class="bg-orange-50 p-2.5 rounded-xl text-orange-500 border border-orange-100">
-                    <i data-lucide="calendar-days" class="w-5 h-5"></i>
+        <div class="p-5 max-w-5xl mx-auto">
+            <div class="flex space-x-3 mb-5">
+                <div class="flex-1 bg-white border border-slate-200 rounded-xl flex items-center px-4 py-3 shadow-sm focus-within:border-orange-400 transition-all">
+                    <i data-lucide="search" class="text-slate-400 w-5 h-5"></i>
+                    <input type="text" id="search-inventory" placeholder="Cari barang..." class="bg-transparent w-full ml-3 outline-none text-sm font-medium text-slate-700">
                 </div>
-                <span class="font-bold text-sm text-slate-700" id="current-date"></span>
             </div>
 
-            <div class="glass-card bg-gradient-to-br from-white to-slate-50 p-6 mb-6 relative overflow-hidden">
-                <div class="relative z-10 w-2/3 md:w-3/4">
-                    <h2 class="text-xl md:text-2xl font-extrabold text-slate-800 mb-2">Mesin Kasir Mobile</h2>
-                    <p class="text-xs md:text-sm text-slate-500 leading-relaxed font-medium">Semua fitur sistem Point of Sale dalam genggaman Anda.</p>
-                </div>
+            <div class="flex space-x-2 mb-6 overflow-x-auto hide-scrollbar pb-1" id="category-tabs"></div>
+
+            <div id="inventory-list" class="space-y-3"></div>
+        </div>
+
+        <div id="product-form-modal" class="fixed inset-0 bg-slate-900/60 z-[60] hidden flex-col items-center justify-end md:justify-center p-0 md:p-4 backdrop-blur-sm">
+            <div class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto hide-scrollbar">
+                <button onclick="closeFormModal()" class="absolute top-4 right-4 bg-slate-100 text-slate-500 hover:bg-slate-200 p-2 rounded-full transition"><i data-lucide="x" class="w-5 h-5"></i></button>
                 
-                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 w-20 h-24 bg-slate-800 rounded-2xl shadow-xl border-t-4 border-orange-500 flex flex-col p-2 icon-3d z-20">
-                    <div class="h-1/2 bg-slate-700 rounded-lg mb-1.5 flex items-center justify-center border border-slate-600"><span class="text-emerald-400 text-sm font-mono font-bold">30.00</span></div>
-                    <div class="h-1/2 flex space-x-1.5">
-                        <div class="w-1/2 bg-slate-100 rounded-lg flex items-center justify-center font-bold text-slate-800 shadow-sm">+</div>
-                        <div class="w-1/2 bg-orange-500 rounded-lg flex items-center justify-center font-bold text-white shadow-sm">=</div>
-                    </div>
-                </div>
-                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-slate-200 rounded-full blur-2xl opacity-50 z-0"></div>
-            </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                <a href="supplier.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-orange-200">
-                    <div class="w-14 h-14 mb-3 bg-orange-50 rounded-2xl flex items-center justify-center icon-3d border border-orange-100">
-                        <i data-lucide="shopping-bag" class="text-orange-500 w-7 h-7"></i>
-                    </div>
-                    <span class="text-sm font-bold text-slate-700">Pembelian</span>
-                </a>
-                <a href="reports.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-teal-200">
-                    <div class="w-14 h-14 mb-3 bg-teal-50 rounded-2xl flex items-center justify-center icon-3d border border-teal-100">
-                        <i data-lucide="banknote" class="text-teal-600 w-7 h-7"></i>
-                    </div>
-                    <span class="text-sm font-bold text-slate-700">Pengeluaran</span>
-                </a>
-                <a href="hrm.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-rose-200">
-                    <div class="w-14 h-14 mb-3 bg-rose-50 rounded-2xl flex items-center justify-center icon-3d border border-rose-100">
-                        <i data-lucide="users-2" class="text-rose-500 w-7 h-7"></i>
-                    </div>
-                    <span class="text-sm font-bold text-slate-700">Pelanggan</span>
-                </a>
-                <a href="reports.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-indigo-200">
-                    <div class="w-14 h-14 mb-3 bg-indigo-50 rounded-2xl flex items-center justify-center icon-3d border border-indigo-100">
-                        <i data-lucide="file-text" class="text-indigo-500 w-7 h-7"></i>
-                    </div>
-                    <span class="text-sm font-bold text-slate-700">Faktur</span>
-                </a>
-                <a href="hrm.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-emerald-200">
-                    <div class="w-14 h-14 mb-3 bg-emerald-50 rounded-2xl flex items-center justify-center icon-3d border border-emerald-100">
-                        <i data-lucide="shield-check" class="text-emerald-600 w-7 h-7"></i>
-                    </div>
-                    <span class="text-sm font-bold text-slate-700">Manajemen HRM</span>
-                </a>
-                <a href="reports.html" class="glass-card p-5 flex flex-col items-center justify-center text-center transition hover:-translate-y-1 hover:shadow-md cursor-pointer border border-transparent hover:border-purple-200">
-                    <div class="w-14 h-14 mb-3 bg-purple-50 rounded-2xl flex items-center justify-center icon-3d border border-purple-100">
-                        <i data-lucide="pie-chart" class="text-purple-600 w-7 h-7"></i>
-                    </div>
-                    <span class="text-sm font-bold text-slate-700">Laporan</span>
-                </a>
-            </div>
-
-            <div class="mb-4 flex justify-between items-end px-1">
-                <h3 class="font-extrabold text-lg text-slate-800">Transaksi Terakhir</h3>
-                <a href="reports.html" class="text-sm font-bold text-orange-500 hover:text-orange-600 transition">Lihat Semua ></a>
-            </div>
-            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center justify-between mb-8 hover:bg-slate-50 transition cursor-pointer">
-                <div class="flex items-center space-x-4">
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <i data-lucide="receipt" class="text-slate-600 w-6 h-6"></i>
-                    </div>
+                <h2 id="modal-form-title" class="text-lg font-extrabold text-slate-800 mb-5 flex items-center"><i data-lucide="box" class="w-5 h-5 mr-2 text-orange-500"></i> Tambah Produk Baru</h2>
+                
+                <form id="product-main-form" onsubmit="saveProductForm(event)" class="space-y-4">
+                    <input type="hidden" id="form-product-id">
+                    
                     <div>
-                        <p class="text-sm font-extrabold text-slate-800">15/06/2026</p>
-                        <p class="text-xs text-slate-500 font-medium">INV-001</p>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Nama Produk</label>
+                        <input type="text" id="form-name" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-semibold outline-none focus:border-orange-500 transition">
                     </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Kode Barcode</label>
+                            <div class="flex space-x-2">
+                                <input type="text" id="form-barcode" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-mono font-bold outline-none focus:border-orange-500 transition">
+                                <button type="button" onclick="toggleFormScanner()" class="bg-slate-900 text-white px-3.5 rounded-xl hover:bg-slate-800 transition"><i data-lucide="camera" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Kategori</label>
+                            <input type="text" id="form-category" list="category-options" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-semibold outline-none focus:border-orange-500 transition" placeholder="Pilih / ketik baru...">
+                            <datalist id="category-options"></datalist>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Harga Jual (Rp)</label>
+                            <input type="number" id="form-price" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold text-slate-800 outline-none focus:border-orange-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Jumlah Stok</label>
+                            <input type="number" id="form-stock" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold text-slate-800 outline-none focus:border-orange-500 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Gambar Produk (G-Drive / LH3)</label>
+                        <div class="flex flex-col space-y-2">
+                            <input type="file" id="form-file-upload" accept="image/*" onchange="uploadPhotoToDrive()" class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:font-bold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer">
+                            <input type="url" id="form-image" readonly class="w-full bg-slate-100 border border-slate-200 rounded-xl py-2.5 px-4 text-xs font-medium outline-none text-slate-500" placeholder="Otomatis terisi...">
+                        </div>
+                    </div>
+
+                    <div class="pt-3 flex space-x-2">
+                        <button type="button" id="btn-delete-product" onclick="deleteProductForm()" class="hidden bg-rose-50 text-rose-600 border border-rose-200 font-bold px-4 rounded-xl hover:bg-rose-100 transition items-center justify-center"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                        <button type="button" id="btn-print-qr" onclick="printProductQR()" class="hidden bg-blue-50 text-blue-600 border border-blue-200 font-bold px-4 rounded-xl hover:bg-blue-100 transition items-center justify-center"><i data-lucide="qr-code" class="w-5 h-5"></i></button>
+                        <button type="submit" class="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-slate-800 transition tracking-wide text-sm">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="form-scanner-modal" class="fixed inset-0 bg-slate-900/95 z-[70] hidden flex-col items-center justify-center p-4 backdrop-blur-md">
+            <div class="bg-white p-5 rounded-[28px] w-full max-w-sm shadow-2xl relative">
+                <button type="button" onclick="toggleFormScanner()" class="absolute -top-14 right-0 text-white bg-slate-800 p-3 rounded-full"><i data-lucide="x"></i></button>
+                <div class="text-center mb-4">
+                    <h3 class="font-extrabold text-slate-800">Scan Barcode Barang</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-1">Arahkan kamera ke barcode produk</p>
                 </div>
-                <div class="text-right flex items-center space-x-3">
-                    <p class="text-sm font-extrabold text-slate-800">Rp 125.000</p>
-                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
+                <div id="form-reader" class="bg-slate-100 h-64 rounded-2xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden"></div>
+            </div>
+        </div>
+
+        <div id="bulk-print-modal" class="fixed inset-0 bg-slate-900/60 z-[80] hidden flex-col items-center justify-end md:justify-center p-0 md:p-4 backdrop-blur-sm">
+            <div class="bg-white w-full md:max-w-2xl rounded-t-3xl md:rounded-3xl p-6 shadow-2xl relative flex flex-col h-[85vh] md:h-[80vh]">
+                <button onclick="closeBulkPrintModal()" class="absolute top-4 right-4 bg-slate-100 text-slate-500 hover:bg-slate-200 p-2 rounded-full transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+                
+                <h2 class="text-lg font-extrabold text-slate-800 mb-2 flex items-center"><i data-lucide="printer" class="w-5 h-5 mr-2 text-blue-500"></i> Cetak Label Massal</h2>
+                <p class="text-xs text-slate-500 mb-4">Pilih produk dan tentukan jumlah label yang ingin dicetak sekaligus.</p>
+                
+                <div class="bg-slate-50 border border-slate-200 rounded-xl flex items-center px-4 py-2.5 mb-3">
+                    <i data-lucide="search" class="text-slate-400 w-4 h-4"></i>
+                    <input type="text" id="search-bulk-print" placeholder="Cari nama barang..." class="bg-transparent w-full ml-3 outline-none text-sm font-medium" oninput="renderBulkPrintList(this.value)">
+                </div>
+
+                <div id="bulk-print-list" class="flex-1 overflow-y-auto hide-scrollbar space-y-2 mb-4 border-t border-b border-slate-50 py-3"></div>
+
+                <div class="pt-3 flex justify-between items-center border-t border-slate-100">
+                    <div>
+                        <span class="text-xs text-slate-500 block mb-0.5">Total Dicetak</span>
+                        <span class="text-lg font-extrabold text-blue-600"><span id="bulk-total-labels">0</span> Label</span>
+                    </div>
+                    <button onclick="executeBulkPrint()" class="bg-blue-600 text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:bg-blue-700 transition tracking-wide text-sm flex items-center">
+                        <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak Sekarang
+                    </button>
                 </div>
             </div>
         </div>
+
     </main>
 
     <nav class="md:hidden bottom-nav fixed bottom-0 w-full bg-white flex justify-around items-end px-2 pt-2 pb-5 z-50">
-        <a href="index.html" class="flex flex-col items-center text-orange-500 p-2 w-16">
-            <i data-lucide="home" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold mt-1.5">Home</span>
-        </a>
-        <a href="inventory.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition">
-            <i data-lucide="package" class="w-6 h-6"></i>
-            <span class="text-[10px] font-medium mt-1.5">Stok</span>
-        </a>
-        
-        <div class="w-16 flex justify-center">
-            <a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6 hover:scale-105 transition-transform">
-                <i data-lucide="scan-line" class="w-6 h-6"></i>
-                <span class="text-[10px] font-bold mt-0.5">Sale</span>
-            </a>
-        </div>
-
-        <a href="supplier.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition">
-            <i data-lucide="users" class="w-6 h-6"></i>
-            <span class="text-[10px] font-medium mt-1.5">Supplier</span>
-        </a>
-        <a href="more.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition">
-            <i data-lucide="layout-grid" class="w-6 h-6"></i>
-            <span class="text-[10px] font-medium mt-1.5">More</span>
-        </a>
+        <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Home</span></a>
+        <a href="inventory.html" class="flex flex-col items-center text-orange-500 p-2 w-16"><i data-lucide="package" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-1.5">Stok</span></a>
+        <div class="w-16 flex justify-center"><a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6"><i data-lucide="scan-line" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-0.5">Sale</span></a></div>
+        <a href="supplier.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="users" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Supplier</span></a>
+        <a href="more.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">More</span></a>
     </nav>
 
-    <script>
-        // Inisialisasi Icon Lucide
-        lucide.createIcons();
-        
-        // Menampilkan Tanggal Hari Ini dalam Bahasa Indonesia
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString('id-ID', options);
-    </script>
-    <script src="js/app.js"></script>
-    <script src="js/sync.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="js/db.js"></script> 
+    <script src="js/sync.js"></script> 
+    <script src="js/pages/inventory.js"></script> 
+    <script src="js/app.js"></script> 
 </body>
 </html>
