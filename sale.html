@@ -14,10 +14,12 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .cart-slide-up { transform: translateY(0%); }
         .cart-slide-down { transform: translateY(100%); }
-        #reader { width: 100%; border-radius: 16px; overflow: hidden; border: none; }
-        #reader video { object-fit: cover; }
-        #reader img { display: none !important; }
-        #qr-shaded-region { border-color: rgba(0, 0, 0, 0.7) !important; }
+        /* --- DESAIN SCANNER MODERN (FULL SCREEN BOX) --- */
+        #reader { border: none !important; background: transparent; width: 100%; height: 100%; }
+        #reader video { object-fit: cover !important; border-radius: 32px !important; width: 100% !important; height: 100% !important; }
+        /* Sembunyikan elemen bawaan library HTML5-QRCode yang jelek */
+        #reader img, #reader a, #reader span { display: none !important; }
+        #qr-shaded-region { display: none !important; } /* Matikan overlay bawaan */
 
         /* Pengaturan Cetak Struk (Printer Thermal/PDF) */
         @media print {
