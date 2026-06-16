@@ -15,7 +15,10 @@
         .glass-card { background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 4px 15px -5px rgba(0, 0, 0, 0.05); border-radius: 16px; }
         .bottom-nav { box-shadow: 0 -4px 25px rgba(0,0,0,0.06); border-top-left-radius: 24px; border-top-right-radius: 24px; }
         .btn-sale-float { background: linear-gradient(135deg, #ff7043, #ff5722); transform: translateY(-20px); box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4); border: 4px solid white; }
-        #form-reader { width: 100%; border-radius: 16px; overflow: hidden; border: none; }
+        #form-reader { width: 100%; border-radius: 20px; overflow: hidden; border: none !important; box-shadow: inset 0px 0px 20px rgba(0,0,0,0.5); background: #000; }
+        #form-reader video { object-fit: cover; border-radius: 20px; }
+        #form-reader img { display: none !important; } /* Sembunyikan logo default */
+        #qr-shaded-region { border-color: rgba(0, 0, 0, 0.7) !important; }
     </style>
 </head>
 <body class="flex text-slate-800 pb-24 md:pb-0">
@@ -64,12 +67,7 @@
             </div>
 
             <div class="flex space-x-2 mb-6 overflow-x-auto hide-scrollbar pb-1" id="category-tabs">
-                <button onclick="filterInventory('Semua', this)" class="inv-cat-btn px-5 py-2 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition">Semua</button>
-                <button onclick="filterInventory('Minuman', this)" class="inv-cat-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition">Minuman</button>
-                <button onclick="filterInventory('Snack', this)" class="inv-cat-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition">Snack</button>
-                <button onclick="filterInventory('Makanan', this)" class="inv-cat-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition">Makanan</button>
-                <button onclick="filterInventory('Kebutuhan', this)" class="inv-cat-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition">Kebutuhan</button>
-            </div>
+                </div>
 
             <div id="inventory-list" class="space-y-3"></div>
         </div>
@@ -97,13 +95,12 @@
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Kategori</label>
-                            <select id="form-category" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-semibold outline-none focus:border-orange-500 transition">
-                                <option value="Minuman">Minuman</option>
-                                <option value="Snack">Snack</option>
-                                <option value="Makanan">Makanan</option>
-                                <option value="Kebutuhan">Kebutuhan</option>
-                            </select>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Kategori</label>
+                                <input type="text" id="form-category" list="category-options" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-semibold outline-none focus:border-orange-500 transition" placeholder="Pilih atau ketik baru...">
+                                <datalist id="category-options">
+                                    </datalist>
+                            </div>
                         </div>
                     </div>
 
@@ -126,11 +123,16 @@
                         </div>
                     </div>
 
-                    <div class="pt-3 flex space-x-3">
+                    <div class="pt-3 flex space-x-2">
                         <button type="button" id="btn-delete-product" onclick="deleteProductForm()" class="hidden bg-rose-50 text-rose-600 border border-rose-200 font-bold px-4 rounded-xl hover:bg-rose-100 transition items-center justify-center">
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
-                        <button type="submit" class="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-slate-800 transition tracking-wide text-sm">Simpan Perubahan</button>
+                        
+                        <button type="button" id="btn-print-qr" onclick="printProductQR()" class="hidden bg-blue-50 text-blue-600 border border-blue-200 font-bold px-4 rounded-xl hover:bg-blue-100 transition items-center justify-center">
+                            <i data-lucide="qr-code" class="w-5 h-5"></i>
+                        </button>
+
+                        <button type="submit" class="flex-1 bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-slate-800 transition tracking-wide text-sm">Simpan</button>
                     </div>
                 </form>
             </div>
@@ -157,6 +159,7 @@
         <a href="more.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">More</span></a>
     </nav>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <script src="js/db.js"></script> 
     <script src="js/sync.js"></script> 
