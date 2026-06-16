@@ -80,22 +80,27 @@
                             <h3 class="font-extrabold text-sm text-slate-800 mb-4 flex items-center border-b border-slate-100 pb-3">
                                 <i data-lucide="shopping-bag" class="w-4 h-4 mr-2 text-orange-500"></i> Daftar Barang Masuk
                             </h3>
+                            
                             <div id="restock-cart" class="flex-1 space-y-3 overflow-y-auto mb-4">
                                 </div>
+                            
                             <div class="border-t border-slate-100 pt-4 mt-auto">
                                 <div class="flex justify-between items-end mb-4">
                                     <span class="text-sm font-bold text-slate-500">Total Tagihan Beli</span>
                                     <span id="restock-total" class="text-2xl font-extrabold text-orange-500">Rp 0</span>
                                 </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <button onclick="processRestock('Tempo')" class="bg-rose-50 text-rose-600 border border-rose-200 font-bold py-3 rounded-xl hover:bg-rose-100 transition">
-                                        Catat sbg Kasbon
-                                    </button>
-                                    <button onclick="processRestock('Lunas')" class="bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-md hover:bg-emerald-600 transition">
-                                        Bayar Lunas
-                                    </button>
+                                <div class="mb-4">
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Dibayar Sekarang (DP/Lunas)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
+                                        <input type="number" id="restock-pay-input" placeholder="0 (Kosong = Full Kasbon)" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-sm font-extrabold text-slate-800 outline-none focus:border-orange-500">
+                                    </div>
                                 </div>
+                                <button onclick="processRestock()" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-slate-800 transition flex justify-center items-center">
+                                    <i data-lucide="save" class="w-4 h-4 mr-2"></i> Simpan Transaksi Masuk
+                                </button>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -166,7 +171,7 @@
                 <h2 class="text-lg font-extrabold text-slate-800 mb-4">Input Data Supplier</h2>
                 <form id="supplier-form" onsubmit="saveSupplier(event)">
                     <input type="text" id="sup-name" placeholder="Nama PT / Distributor" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-3 outline-none">
-                    <input type="text" id="sup-phone" placeholder="No. Telepon / WA" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-3 outline-none">
+                    <input type="number" id="sup-phone" placeholder="No. Telepon / WA" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-3 outline-none">
                     <textarea id="sup-address" placeholder="Alamat lengkap" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-4 outline-none"></textarea>
                     <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md">Simpan Supplier</button>
                 </form>
