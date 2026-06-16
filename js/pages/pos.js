@@ -41,7 +41,6 @@ function renderFilteredProducts(products) {
     }
 
     products.forEach(p => {
-        // PERBAIKAN: Konversi ke String agar tipe data Number dari DB cocok dengan String di HTML
         const inCart = cart.find(item => String(item.barcode) === String(p.barcode));
         const card = document.createElement('div');
         
@@ -74,19 +73,32 @@ function renderFilteredProducts(products) {
 }
 
 function addToCart(product) {
-    // PERBAIKAN: Tambahkan String()
     const existing = cart.find(item => String(item.barcode) === String(product.barcode));
+    
+    // Validasi Stok (Mencegah penjualan melebihi stok yang ada)
+    const currentQtyInCart = existing ? existing.qty : 0;
+    if (currentQtyInCart >= product.stock) {
+        alert(`Stok ${product.name} tidak mencukupi! (Sisa: ${product.stock})`);
+        return;
+    }
+
     if (!existing) cart.push({ ...product, qty: 1 });
     else existing.qty += 1;
+    
     updateCartUI();
     refreshCurrentGrid();
     closeProductModal(); 
 }
 
 function updateQty(barcode, change) {
-    // PERBAIKAN: Tambahkan String() dan pastikan change adalah integer
     const item = cart.find(item => String(item.barcode) === String(barcode));
     if (item) {
+        // Cek stok saat ditambah dari tombol plus
+        if (change > 0 && item.qty + change > item.stock) {
+            alert(`Maksimal stok ${item.name} adalah ${item.stock}`);
+            return;
+        }
+
         item.qty += parseInt(change);
         if (item.qty <= 0) cart = cart.filter(i => String(i.barcode) !== String(barcode)); 
     }
@@ -110,12 +122,21 @@ function updateCartUI() {
     const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
     currentCheckoutTotal = totalPrice; 
 
-    document.getElementById('mobile-cart-badge').textContent = totalItems;
-    document.getElementById('mobile-cart-badge').style.display = totalItems > 0 ? 'flex' : 'none';
-    document.getElementById('total-price').textContent = `Rp ${totalPrice.toLocaleString('id-ID')}`;
-    document.getElementById('desktop-item-count').textContent = `${totalItems} Item`;
+    const badge = document.getElementById('mobile-cart-badge');
+    if(badge) {
+        badge.textContent = totalItems;
+        badge.style.display = totalItems > 0 ? 'flex' : 'none';
+    }
+    
+    const totalPriceEl = document.getElementById('total-price');
+    if(totalPriceEl) totalPriceEl.textContent = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+    
+    const desktopItemCount = document.getElementById('desktop-item-count');
+    if(desktopItemCount) desktopItemCount.textContent = `${totalItems} Item`;
 
     const cartContainer = document.getElementById('cart-container');
+    if(!cartContainer) return;
+
     cartContainer.innerHTML = ''; 
 
     if (cart.length === 0) {
@@ -123,14 +144,14 @@ function updateCartUI() {
     } else {
         cart.forEach(item => {
             const cartItem = document.createElement('div');
-            cartItem.className = 'bg-white p-3 rounded-2xl border border-slate-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)]';
+            cartItem.className = 'bg-white p-3 rounded-2xl border border-slate-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] mb-3';
             cartItem.innerHTML = `
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1 pr-2">
                         <h4 class="text-sm font-bold text-slate-800 line-clamp-1">${item.name}</h4>
                         <p class="text-[10px] text-slate-500 font-medium">Rp ${Number(item.price).toLocaleString('id-ID')} / pcs</p>
                     </div>
-                    <button onclick="updateQty('${item.barcode}', -${item.qty})" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <button onclick="updateQty('${item.barcode}', -${item.qty})" class="text-red-400 hover:text-red-600 p-1 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </div>
                 <div class="flex items-center justify-between border-t border-slate-50 pt-2">
                     <div class="flex items-center bg-slate-50 rounded-lg p-0.5 border border-slate-200">
@@ -148,9 +169,12 @@ function updateCartUI() {
 }
 
 function openProductPreview(p) {
-    document.getElementById('product-modal').classList.remove('hidden');
-    document.getElementById('product-modal').classList.add('flex');
+    const modal = document.getElementById('product-modal');
+    if(!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
     setTimeout(() => { document.getElementById('product-modal-content').classList.remove('translate-y-full'); }, 10);
+    
     document.getElementById('preview-img').src = p.image_url;
     document.getElementById('preview-name').textContent = p.name;
     document.getElementById('preview-category').textContent = p.category;
@@ -162,16 +186,20 @@ function openProductPreview(p) {
 }
 
 function closeProductModal() {
-    document.getElementById('product-modal-content').classList.add('translate-y-full');
+    const content = document.getElementById('product-modal-content');
+    const modal = document.getElementById('product-modal');
+    if(content) content.classList.add('translate-y-full');
     setTimeout(() => {
-        document.getElementById('product-modal').classList.add('hidden');
-        document.getElementById('product-modal').classList.remove('flex');
+        if(modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
     }, 300);
 }
 
-let currentPaymentMethod = 'Cash'; // Default metode pembayaran
+let currentPaymentMethod = 'Cash'; 
 
-// 4. Modul Pembayaran (Checkout)
+// Checkout
 function processPayment() {
     if(cart.length === 0) return alert('Keranjang masih kosong!');
     
@@ -182,10 +210,8 @@ function processPayment() {
     document.getElementById('checkout-modal').classList.add('flex');
     document.getElementById('checkout-total').textContent = `Rp ${currentCheckoutTotal.toLocaleString('id-ID')}`;
     
-    // Reset ke metode Tunai secara default saat modal dibuka
     selectPaymentMethod('Cash');
     
-    // Buat Tombol Uang Cepat
     const quickCashContainer = document.getElementById('quick-cash-buttons');
     quickCashContainer.innerHTML = '';
     const quickAmounts = [currentCheckoutTotal, 50000, 100000, 200000];
@@ -214,29 +240,17 @@ function selectPaymentMethod(method) {
     const btnComplete = document.getElementById('btn-complete-pay');
 
     if (method === 'Cash') {
-        // Styling Tab
         btnCash.className = "flex-1 py-2.5 bg-white shadow-sm rounded-lg text-sm font-bold text-slate-800 transition";
         btnQris.className = "flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition";
-        // Tampilkan Form Tunai
-        secCash.classList.remove('hidden');
-        secCash.classList.add('block');
-        secQris.classList.remove('flex');
-        secQris.classList.add('hidden');
-        
-        // Reset Kalkulasi
+        secCash.classList.remove('hidden'); secCash.classList.add('block');
+        secQris.classList.remove('flex'); secQris.classList.add('hidden');
         document.getElementById('cash-input').value = '';
         calculateChange(); 
     } else {
-        // Styling Tab
         btnQris.className = "flex-1 py-2.5 bg-white shadow-sm rounded-lg text-sm font-bold text-slate-800 transition";
         btnCash.className = "flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition";
-        // Tampilkan Form QRIS
-        secQris.classList.remove('hidden');
-        secQris.classList.add('flex');
-        secCash.classList.remove('block');
-        secCash.classList.add('hidden');
-        
-        // Karena QRIS otomatis uang pas, langsung aktifkan tombol selesai
+        secQris.classList.remove('hidden'); secQris.classList.add('flex');
+        secCash.classList.remove('block'); secCash.classList.add('hidden');
         btnComplete.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg transition flex justify-center items-center cursor-pointer";
         btnComplete.style.pointerEvents = 'auto';
     }
@@ -269,7 +283,6 @@ function calculateChange() {
 }
 
 async function completeTransaction() {
-    // Logika nilai berdasarkan metode pembayaran
     let cashInput = currentCheckoutTotal;
     let change = 0;
     let paymentText = 'QRIS';
@@ -286,37 +299,24 @@ async function completeTransaction() {
 
     try {
         const saleId = await db.sales.add({
-            receipt_no: receiptNo,
-            date: new Date().toISOString(),
-            total: currentCheckoutTotal,
-            payment_method: paymentText, // Masuk ke Database
-            amount_paid: cashInput,
-            change: change,
-            sync_status: 0 
+            receipt_no: receiptNo, date: new Date().toISOString(), total: currentCheckoutTotal,
+            payment_method: paymentText, amount_paid: cashInput, change: change, sync_status: 0 
         });
 
         for (let item of cart) {
             await db.sale_items.add({
-                sale_id: saleId,
-                product_id: item.barcode, 
-                name: item.name,
-                qty: item.qty,
-                price: item.price,
-                subtotal: item.price * item.qty
+                sale_id: saleId, product_id: item.barcode, name: item.name,
+                qty: item.qty, price: item.price, subtotal: item.price * item.qty
             });
             const prod = await db.products.where('barcode').equals(item.barcode).first() || await db.products.where('barcode').equals(Number(item.barcode)).first();
             if(prod) await db.products.update(prod.id, {stock: prod.stock - item.qty});
         }
 
-        // Generate Struk Visual
         document.getElementById('rcpt-no').textContent = receiptNo;
         document.getElementById('rcpt-date').textContent = dateStr;
         
-        // Sesuaikan teks metode pembayaran di struk
         const rcptMethodElements = document.querySelectorAll('.receipt-method-text');
-        if(rcptMethodElements.length > 0) {
-            rcptMethodElements.forEach(el => el.textContent = paymentText);
-        }
+        if(rcptMethodElements.length > 0) rcptMethodElements.forEach(el => el.textContent = paymentText);
 
         const rcptItems = document.getElementById('rcpt-items');
         rcptItems.innerHTML = '';
@@ -337,17 +337,12 @@ async function completeTransaction() {
         document.getElementById('rcpt-change').textContent = `Rp ${change.toLocaleString('id-ID')}`;
 
         cart = [];
-        closeCheckout();
-        updateCartUI();
-        refreshCurrentGrid();
+        closeCheckout(); updateCartUI(); refreshCurrentGrid();
 
         document.getElementById('receipt-modal').classList.remove('hidden');
         document.getElementById('receipt-modal').classList.add('flex');
 
-        // Picu Sync Otomatis
-        if (navigator.onLine && typeof syncSalesToCloud === 'function') {
-            syncSalesToCloud(true);
-        }
+        if (navigator.onLine && typeof syncSalesToCloud === 'function') syncSalesToCloud(true);
 
     } catch (error) {
         console.error("Gagal memproses transaksi:", error);
@@ -363,6 +358,8 @@ function closeReceipt() {
 function toggleMobileCart() {
     const cartPanel = document.getElementById('cart-panel');
     const overlay = document.getElementById('cart-overlay');
+    if (!cartPanel || !overlay) return;
+
     if (cartPanel.classList.contains('cart-slide-down')) {
         cartPanel.classList.replace('cart-slide-down', 'cart-slide-up');
         overlay.classList.remove('hidden');
@@ -372,39 +369,68 @@ function toggleMobileCart() {
     }
 }
 
+// ==============================================================
+// PERBAIKAN: SCANNER BARCODE 30 FPS + ANTI-CRASH CLOSE MODAL
+// ==============================================================
 function toggleScanner() {
     const modal = document.getElementById('scanner-modal');
+    if (!modal) return;
+
     if (modal.classList.contains('hidden')) {
+        // Buka Modal
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        
+        // Buat objek scanner baru
         html5QrcodeScanner = new Html5Qrcode("reader");
         html5QrcodeScanner.start(
             { facingMode: "environment" }, 
-            { fps: 10, qrbox: {width: 250, height: 250} }, 
+            { 
+                fps: 30, // Dipercepat agar peka pergerakan
+                qrbox: { width: 280, height: 120 }, // Bentuk panjang spesifik barcode 1D
+                aspectRatio: 1.0 
+            }, 
             (decodedText) => {
-                html5QrcodeScanner.stop();
-                toggleScanner();
-                cariDanTambahProdukByBarcode(decodedText);
+                // Saat sukses membaca:
+                // 1. Matikan kamera DULU
+                html5QrcodeScanner.stop().then(() => {
+                    // 2. Tutup Modal Manual (Jangan panggil toggleScanner lagi agar tidak bentrok)
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    
+                    // 3. Eksekusi pencarian barang
+                    cariDanTambahProdukByBarcode(decodedText);
+                }).catch(err => {
+                    console.error("Gagal menghentikan scanner", err);
+                });
             },
-            (errorMessage) => {}
+            (errorMessage) => { /* Abaikan error agar tidak spam console */ }
         ).catch((err) => {
-            alert("Izin kamera ditolak atau kamera tidak ditemukan.");
-            toggleScanner();
+            alert("Izin kamera ditolak atau kamera tidak terdeteksi.");
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         });
     } else {
+        // Jika tombol close (X) dipencet manual
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-        if(html5QrcodeScanner) html5QrcodeScanner.stop().catch(e => console.log(e));
+        if(html5QrcodeScanner) {
+            html5QrcodeScanner.stop().catch(e => console.log(e));
+        }
     }
 }
 
 async function cariDanTambahProdukByBarcode(barcode) {
-    // Cari produk menggunakan konversi longgar
     const allProducts = await db.products.toArray();
+    // Cari produk menggunakan string ketat
     const product = allProducts.find(p => String(p.barcode) === String(barcode));
     
-    if(product) addToCart(product);
-    else alert(`Produk dengan barcode ${barcode} tidak ditemukan.`);
+    if(product) {
+        addToCart(product);
+        // Putar suara kecil jika diinginkan di masa depan
+    } else {
+        alert(`❌ Barang dengan barcode "${barcode}" tidak terdaftar di Inventori.`);
+    }
 }
 
 async function triggerSearch(keyword) {
