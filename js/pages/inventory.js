@@ -15,17 +15,13 @@ async function generateCategoryTabs() {
     try {
         const products = await db.products.toArray();
         const uniqueCategories = [...new Set(products.map(p => p.category))].filter(Boolean);
-        
         const tabsContainer = document.getElementById('category-tabs');
         if (!tabsContainer) return;
-
         tabsContainer.innerHTML = `<button onclick="filterInventory('Semua', this)" class="inv-cat-btn px-5 py-2 rounded-xl ${currentCategoryFilter === 'Semua' ? 'bg-orange-500 text-white' : 'bg-white text-slate-600'} font-bold text-sm shadow-sm whitespace-nowrap transition">Semua</button>`;
-
         uniqueCategories.forEach(cat => {
             const isActive = currentCategoryFilter === cat;
             tabsContainer.innerHTML += `<button onclick="filterInventory('${cat}', this)" class="inv-cat-btn px-5 py-2 rounded-xl ${isActive ? 'bg-orange-500 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200'} font-medium text-sm whitespace-nowrap hover:bg-slate-50 transition">${cat}</button>`;
         });
-
         const datalist = document.getElementById('category-options');
         if (datalist) {
             datalist.innerHTML = '';
@@ -38,35 +34,27 @@ async function generateCategoryTabs() {
 async function renderInventoryList(category = 'Semua', keyword = '') {
     const listContainer = document.getElementById('inventory-list');
     if (!listContainer) return;
-
     listContainer.innerHTML = '<div class="col-span-full flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div></div>';
-
     try {
         let products = await db.products.toArray();
         keyword = keyword.toLowerCase();
-
         let filteredProducts = products.filter(p => {
             const matchCategory = (category === 'Semua' || p.category === category);
             const matchKeyword = (p.name.toLowerCase().includes(keyword) || String(p.barcode).includes(keyword));
             return matchCategory && matchKeyword;
         });
-
         listContainer.innerHTML = '';
-
         if (filteredProducts.length === 0) {
             listContainer.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm"><p class="text-slate-400 text-sm font-medium">Tidak ada produk.</p></div>`;
             return;
         }
-
         filteredProducts.forEach(p => {
             const itemRow = document.createElement('div');
             let stockColorClass = "text-emerald-500"; let stockLabel = "Pcs";
             if (p.stock <= 0) { stockColorClass = "text-rose-500 font-extrabold"; stockLabel = "Habis"; } 
             else if (p.stock <= 5) { stockColorClass = "text-orange-500 font-bold"; stockLabel = "Menipis"; }
-
             itemRow.className = 'glass-card p-3.5 flex items-center justify-between hover:border-orange-300 transition-all duration-200 cursor-pointer bg-white';
             itemRow.onclick = () => openFormModal(p);
-
             itemRow.innerHTML = `
                 <div class="flex items-center space-x-4">
                     <div class="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center p-1.5 border border-slate-100 overflow-hidden shrink-0">
@@ -198,7 +186,7 @@ async function uploadPhotoToDrive() {
     reader.readAsDataURL(file); 
 }
 
-// 6. Simpan Form (Update Lokal + Sheet)
+// 6. Simpan Form
 async function saveProductForm(e) {
     e.preventDefault();
     if (document.getElementById('form-image').value.includes("Sedang")) return alert("Harap tunggu hingga upload selesai!");
@@ -316,13 +304,13 @@ function updateBulkTotal() {
     document.getElementById('bulk-total-labels').textContent = total;
 }
 
-// Eksekusi Cetak Massal (Memproses Data ke Kertas Cetak)
+// Eksekusi Cetak (Bisa Massal atau Tunggal)
 async function executeBulkPrint(singleItem = null) {
     let itemsToPrint = [];
     if (singleItem) {
-        itemsToPrint = [singleItem];
+        itemsToPrint = [singleItem]; // Paksa hanya cetak barang ini
     } else {
-        itemsToPrint = bulkPrintData.filter(p => p.printQty > 0);
+        itemsToPrint = bulkPrintData.filter(p => p.printQty > 0); // Cetak banyak barang
     }
     
     if (itemsToPrint.length === 0) return alert("Pilih minimal satu barang untuk dicetak.");
@@ -370,13 +358,7 @@ async function executeBulkPrint(singleItem = null) {
                     @page { margin: 2mm; }
                     body { background: white; padding: 0; margin: 0; gap: 2mm; justify-content: flex-start; }
                     .print-btn-wrapper { display: none; }
-                    
-                    /* Kompatibel A4 Grid (Flex) & 58mm Thermal */
-                    .label-container { 
-                        border: 1px solid #000; box-shadow: none; padding: 2mm; 
-                        width: 46mm; max-width: 100%; border-radius: 2mm; 
-                        margin: 0; page-break-inside: avoid;
-                    }
+                    .label-container { border: 1px solid #000; box-shadow: none; padding: 2mm; width: 46mm; max-width: 100%; border-radius: 2mm; margin: 0; page-break-inside: avoid; }
                     .label-name { font-size: 10px; margin-bottom: 2mm; color: #000; font-weight: bold; white-space: normal; overflow: visible; }
                     .label-qr { width: 34mm; height: 34mm; padding: 0; border: none; display: block; margin: 0 auto; }
                     .label-bc { font-size: 9px; color: #000; margin-top: 1mm; }
@@ -386,7 +368,7 @@ async function executeBulkPrint(singleItem = null) {
         </head>
         <body>
             <div class="print-btn-wrapper">
-                <div class="info-text">Silakan pilih ukuran kertas pada dialog print. Label akan secara otomatis berjajar (grid) jika Anda menggunakan kertas A4, atau tersusun vertikal jika menggunakan Printer Kasir 58mm.</div>
+                <div class="info-text">Pilih ukuran kertas di dialog print. (Kertas A4 = Grid otomatis. Kertas Roll 58mm = Tersusun vertikal).</div>
                 <button class="print-btn" onclick="window.print()">Cetak ${totalLabels} Label Sekarang</button>
             </div>
             ${htmlLabels}
@@ -402,6 +384,7 @@ function printProductQR() {
     const barcode = document.getElementById('form-barcode').value;
     if (!barcode) return alert("Barcode tidak boleh kosong!");
     
+    // Kirim objek spesifik agar yang tercetak hanya 1 barang ini
     const singleItem = {
         name: document.getElementById('form-name').value,
         barcode: barcode,
@@ -411,9 +394,6 @@ function printProductQR() {
     executeBulkPrint(singleItem);
 }
 
-// ==========================================
-// Inisialisasi Halaman
-// ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     if (typeof db !== 'undefined') {
         setTimeout(async () => {
