@@ -8,21 +8,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --bg-body: #f8fafc; }
-        body { background-color: var(--bg-body); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .glass-card { background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 4px 15px -5px rgba(0, 0, 0, 0.05); border-radius: 16px; }
         .bottom-nav { box-shadow: 0 -4px 25px rgba(0,0,0,0.06); border-top-left-radius: 24px; border-top-right-radius: 24px; }
         .btn-sale-float { background: linear-gradient(135deg, #ff7043, #ff5722); transform: translateY(-20px); box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4); border: 4px solid white; }
+        
+        /* Pengaturan Cetak Struk (Printer Thermal/PDF) */
+        @media print {
+            body * { visibility: hidden; }
+            #receipt-printable-area, #receipt-printable-area * { visibility: visible; }
+            #receipt-printable-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 10px; background: white; box-shadow: none; font-family: monospace; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
-<body class="flex text-slate-800 pb-24 md:pb-0">
+<body class="flex text-slate-800 pb-24 md:pb-0 h-screen overflow-hidden">
 
-    <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden border-r border-slate-800">
-        <div class="p-6 flex items-center space-x-3 border-b border-slate-800/80 bg-slate-900">
+    <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden border-r border-slate-800 no-print">
+        <div class="p-6 flex items-center space-x-3 border-b border-slate-800 bg-slate-900">
             <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg"><i data-lucide="pocket" class="text-white"></i></div>
             <h2 class="text-2xl font-extrabold tracking-wide">POS Pocket</h2>
         </div>
-        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6">
+        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6 hide-scrollbar">
             <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="home"></i> <span class="font-medium">Beranda</span></a>
             <a href="inventory.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="package"></i> <span class="font-medium">Inventori</span></a>
             <a href="sale.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="scan-barcode"></i> <span class="font-medium">Kasir / POS</span></a>
@@ -30,101 +39,118 @@
             <a href="hrm.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="users"></i> <span class="font-medium">Manajemen HRM</span></a>
             <a href="reports.html" class="flex items-center space-x-3 bg-slate-800/80 text-orange-400 p-3.5 rounded-xl border border-slate-700 shadow-sm"><i data-lucide="bar-chart-2"></i> <span class="font-bold">Laporan</span></a>
         </nav>
+        <div class="p-5 border-t border-slate-800/80 bg-slate-900">
+            <button onclick="turboSync()" class="w-full flex items-center justify-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-white p-3.5 rounded-xl transition shadow-lg font-bold">
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i><span>Turbo Sync</span>
+            </button>
+        </div>
     </aside>
 
-    <main class="w-full min-h-screen relative md:ml-[260px] md:w-[calc(100%-260px)] bg-slate-50">
-        <header class="bg-white p-5 flex justify-between items-center shadow-sm sticky top-0 z-40 border-b border-slate-100">
+    <main class="w-full flex flex-col h-screen relative md:ml-[260px] md:w-[calc(100%-260px)] bg-slate-50 no-print">
+        
+        <header class="bg-white p-5 flex justify-between items-center shadow-sm shrink-0 border-b border-slate-100 relative z-20">
             <div>
-                <h1 class="text-xl font-extrabold text-slate-800">Laporan & Analitik</h1>
-                <p class="text-xs font-medium text-slate-500">Ringkasan keuangan Anda</p>
+                <h1 class="text-xl font-extrabold text-slate-800">Riwayat Penjualan</h1>
+                <p class="text-xs font-medium text-slate-500">Laporan transaksi & cetak ulang struk</p>
             </div>
-            <button class="bg-slate-800 hover:bg-slate-700 text-white p-2.5 rounded-xl shadow-md transition flex items-center space-x-2">
-                <i data-lucide="download" class="w-5 h-5"></i>
-                <span class="hidden md:inline font-bold text-sm pr-2">Ekspor PDF</span>
+            <button onclick="turboSync()" class="md:hidden bg-emerald-50 text-emerald-600 p-2.5 rounded-xl border border-emerald-200 shadow-sm hover:bg-emerald-100 transition flex items-center font-bold text-sm">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
             </button>
         </header>
 
-        <div class="p-5 max-w-5xl mx-auto space-y-6">
+        <div class="flex-1 overflow-y-auto p-5 max-w-5xl mx-auto w-full hide-scrollbar">
             
-            <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                <div class="flex items-center space-x-2 text-slate-600 font-medium text-sm">
-                    <i data-lucide="calendar" class="w-4 h-4"></i>
-                    <span>Hari Ini</span>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute right-0 top-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-6 -mt-6"></div>
+                    <p class="text-xs font-medium text-orange-100 mb-1">Total Pendapatan</p>
+                    <h3 class="text-2xl font-extrabold" id="report-total-revenue">Rp 0</h3>
                 </div>
-                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
-            </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass-card p-4">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Pendapatan Koto</p>
-                    <h3 class="text-lg md:text-xl font-extrabold text-slate-800">Rp 1.250.000</h3>
-                    <p class="text-[10px] text-emerald-500 font-bold mt-2"><i data-lucide="trending-up" class="w-3 h-3 inline mr-1"></i>+12% vs kemarin</p>
-                </div>
-                <div class="glass-card p-4">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Transaksi</p>
-                    <h3 class="text-lg md:text-xl font-extrabold text-slate-800">48 Nota</h3>
-                </div>
-                <div class="glass-card p-4">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Item Terjual</p>
-                    <h3 class="text-lg md:text-xl font-extrabold text-slate-800">124 Pcs</h3>
-                </div>
-                <div class="glass-card p-4">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Pengeluaran</p>
-                    <h3 class="text-lg md:text-xl font-extrabold text-rose-500">Rp 150.000</h3>
-                </div>
-            </div>
-
-            <div>
-                <h3 class="font-extrabold text-lg text-slate-800 mb-4">Riwayat Penjualan Terbaru</h3>
-                <div class="bg-white rounded-2xl p-2 shadow-sm border border-slate-100 divide-y divide-slate-100">
-                    
-                    <div class="p-3 flex items-center justify-between hover:bg-slate-50 transition rounded-xl cursor-pointer">
-                        <div class="flex items-center space-x-3">
-                            <div class="p-2.5 bg-orange-50 text-orange-500 rounded-lg border border-orange-100">
-                                <i data-lucide="receipt" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold text-slate-800">INV-20260615-003</p>
-                                <p class="text-[11px] text-slate-500 font-medium">15:45 WIB • Tunai</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm font-extrabold text-slate-800">Rp 45.000</p>
-                            <span class="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded font-bold">Lunas</span>
-                        </div>
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-center">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Transaksi</p>
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="receipt" class="text-blue-500 w-6 h-6"></i>
+                        <h3 class="text-2xl font-extrabold text-slate-800" id="report-total-sales">0</h3>
                     </div>
-
-                    <div class="p-3 flex items-center justify-between hover:bg-slate-50 transition rounded-xl cursor-pointer">
-                        <div class="flex items-center space-x-3">
-                            <div class="p-2.5 bg-orange-50 text-orange-500 rounded-lg border border-orange-100">
-                                <i data-lucide="receipt" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold text-slate-800">INV-20260615-002</p>
-                                <p class="text-[11px] text-slate-500 font-medium">13:10 WIB • QRIS</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm font-extrabold text-slate-800">Rp 120.000</p>
-                            <span class="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded font-bold">Lunas</span>
-                        </div>
-                    </div>
-
                 </div>
             </div>
 
+            <div class="flex space-x-3 mb-5">
+                <div class="flex-1 bg-white border border-slate-200 rounded-xl flex items-center px-4 py-3 shadow-sm focus-within:border-orange-400 transition-all">
+                    <i data-lucide="search" class="text-slate-400 w-5 h-5"></i>
+                    <input type="text" id="search-report" placeholder="Cari No. Invoice..." class="bg-transparent w-full ml-3 outline-none text-sm font-medium text-slate-700">
+                </div>
+            </div>
+
+            <h3 class="font-extrabold text-sm text-slate-800 mb-3 px-1">Daftar Transaksi Terbaru</h3>
+            <div id="transaction-list" class="space-y-3 pb-10">
+                </div>
+            
         </div>
+
+        <div id="receipt-reprint-modal" class="fixed inset-0 bg-slate-900/80 z-[90] hidden flex-col items-center justify-center p-4 backdrop-blur-md">
+            <div class="bg-white w-full max-w-sm rounded-t-xl rounded-b-md shadow-2xl relative flex flex-col max-h-[90vh]">
+                <div id="receipt-printable-area" class="p-6 overflow-y-auto hide-scrollbar bg-white rounded-t-xl text-sm font-mono text-slate-800">
+                    <div class="text-center mb-4">
+                        <h2 class="font-bold text-lg">POS POCKET STORE</h2>
+                        <p class="text-xs text-slate-500">Jl. Teknologi No.1, Jawa Timur</p>
+                        <p class="text-[10px] font-bold mt-1 border border-slate-800 rounded px-2 py-0.5 inline-block">COPY RECEIPT</p>
+                    </div>
+                    <hr class="border-dashed border-slate-300 my-2">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>No: <span id="reprint-no">INV-000</span></span>
+                        <span id="reprint-date">00/00/0000</span>
+                    </div>
+                    <div class="flex justify-between text-xs mb-3">
+                        <span>Kasir: Admin</span>
+                        <span id="reprint-method">Tunai</span>
+                    </div>
+                    <hr class="border-dashed border-slate-300 my-2">
+                    <div id="reprint-items" class="space-y-2 mb-3"></div>
+                    <hr class="border-dashed border-slate-300 my-2">
+                    <div class="flex justify-between font-bold mb-1">
+                        <span>TOTAL</span>
+                        <span id="reprint-total">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500 mb-1">
+                        <span id="reprint-method-label">Tunai</span>
+                        <span id="reprint-cash">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>Kembali</span>
+                        <span id="reprint-change">Rp 0</span>
+                    </div>
+                    <hr class="border-dashed border-slate-300 my-4">
+                    <div class="text-center text-xs text-slate-500">
+                        <p>Terima Kasih atas kunjungan Anda!</p>
+                        <i data-lucide="pocket" class="w-6 h-6 mx-auto mt-2 opacity-30"></i>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-100 rounded-b-md flex space-x-3 no-print border-t border-slate-200">
+                    <button onclick="window.print()" class="flex-1 bg-white border border-slate-300 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition flex items-center justify-center">
+                        <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Cetak Ulang
+                    </button>
+                    <button onclick="closeReprintModal()" class="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition flex items-center justify-center">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
-    <nav class="md:hidden bottom-nav fixed bottom-0 w-full bg-white flex justify-around items-end px-2 pt-2 pb-5 z-50">
+    <nav class="md:hidden bottom-nav fixed bottom-0 w-full bg-white flex justify-around items-end px-2 pt-2 pb-5 z-50 no-print">
         <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Home</span></a>
         <a href="inventory.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="package" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Stok</span></a>
-        <div class="w-16 flex justify-center"><a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6"><i data-lucide="scan-line" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-0.5">Sale</span></a></div>
+        <div class="w-16 flex justify-center"><a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6 hover:scale-105 transition-transform"><i data-lucide="scan-line" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-0.5">Sale</span></a></div>
         <a href="supplier.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="users" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Supplier</span></a>
-        <a href="more.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">More</span></a>
+        <a href="reports.html" class="flex flex-col items-center text-orange-500 p-2 w-16 transition"><i data-lucide="bar-chart-2" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-1.5">Laporan</span></a>
     </nav>
 
-    <script>lucide.createIcons();</script>
-    <script src="js/app.js"></script>
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="js/db.js"></script> 
+    <script src="js/sync.js"></script> 
+    <script src="js/pages/reports.js"></script> 
+    <script src="js/app.js"></script> 
 </body>
 </html>
