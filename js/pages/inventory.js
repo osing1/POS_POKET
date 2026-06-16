@@ -216,6 +216,8 @@ async function uploadPhotoToDrive() {
 }
 
 // 6. Proses Simpan Form (Insert / Update)
+// Ganti fungsi saveProductForm di js/pages/inventory.js dengan versi aman ini:
+
 async function saveProductForm(e) {
     e.preventDefault();
 
@@ -227,22 +229,64 @@ async function saveProductForm(e) {
     const stock = parseInt(document.getElementById('form-stock').value) || 0;
     const image_url = document.getElementById('form-image').value || "https://images.unsplash.com/photo-1584824486509-112e4181f1b6?w=200";
 
+    // PENTING: Jika id kosong (produk baru), buat ID baru. Jika ada, pakai ID lama.
+    const finalId = id || ('P' + new Date().getTime().toString().slice(-4));
+
+    const productData = { 
+        id: finalId, 
+        barcode, 
+        name, 
+        category, 
+        price, 
+        stock, 
+        image_url 
+    };
+
+    const btnSubmit = document.querySelector('#product-main-form button[type="submit"]');
+    const originalText = btnSubmit.innerHTML;
+
     try {
-        if (id) {
-            // PERBAIKAN: Hapus parseInt() karena ID adalah String (misal: "P001")
-            await db.products.update(id, { name, barcode, category, price, stock, image_url });
-        } else {
-            const uniqueId = 'P' + new Date().getTime().toString().slice(-4);
-            await db.products.add({ id: uniqueId, barcode, name, category, price, stock, image_url });
+        // 1. JIKA ONLINE, WAJIB SUKSES DI GOOGLE SHEETS TERLEBIH DAHULU
+        if (navigator.onLine) {
+            btnSubmit.innerHTML = 'Menyinkronkan ke Cloud...';
+            btnSubmit.disabled = true;
+
+            const response = await fetch(SHEET_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'save_product', product: productData }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            });
+
+            const result = await response.json();
+            
+            // Jika Apps Script mengirimkan status error, hentikan proses dan lempar ke blok catch
+            if (result.status !== 'success') {
+                throw new Error(result.message || "Google Sheets menolak menyimpan data.");
+            }
+            console.log("✅ Google Sheets berhasil diperbarui!");
         }
 
+        // 2. JIKA CLOUD SUKSES (ATAU SEDANG OFFLINE), BARU SIMPAN KE DEXIE DB LOKAL
+        if (id) {
+            await db.products.update(id, productData);
+        } else {
+            await db.products.add(productData);
+        }
+
+        // 3. TUTUP MODAL DAN REFRESH TAMPILAN
         closeFormModal();
         const searchVal = document.getElementById('search-inventory')?.value || '';
         renderInventoryList(currentCategoryFilter, searchVal);
 
+        alert("✅ Data barang dan foto berhasil diperbarui di Lokal & Cloud!");
+
     } catch (error) {
-        console.error("Gagal memproses simpan produk:", error);
-        alert("Gagal menyimpan data barang.");
+        // Jika terjadi kegagalan di Google Sheets, popup ini akan memberi tahu letak kesalahannya
+        console.error("Detail Kegagalan Sinkronisasi:", error);
+        alert("❌ Gagal Menyimpan ke Cloud!\n\nPenyebab: " + error.message + "\n\nPerubahan dibatalkan agar data tetap sinkron.");
+    } finally {
+        btnSubmit.innerHTML = originalText;
+        btnSubmit.disabled = false;
     }
 }
 
