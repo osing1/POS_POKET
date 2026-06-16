@@ -90,6 +90,14 @@
             <div id="cart-container" class="flex-1 overflow-y-auto p-5 flex flex-col space-y-3 bg-slate-50"></div>
 
             <div class="p-5 bg-white border-t border-slate-100 shrink-0">
+                <div class="flex justify-between items-end mb-1">
+                    <span class="text-xs font-bold text-slate-500">Subtotal</span>
+                    <span id="subtotal-price" class="text-sm font-bold text-slate-800">Rp 0</span>
+                </div>
+                <div id="ppn-row" class="flex justify-between items-end mb-3 hidden border-b border-slate-100 pb-2">
+                    <span class="text-xs font-bold text-slate-500">PPN (11%)</span>
+                    <span id="ppn-price" class="text-sm font-bold text-orange-400">Rp 0</span>
+                </div>
                 <div class="flex justify-between items-end mb-4">
                     <span class="text-sm font-bold text-slate-500">Total Tagihan</span>
                     <span id="total-price" class="text-3xl font-extrabold text-orange-500">Rp 0</span>
@@ -142,6 +150,7 @@
                     <div class="flex space-x-2 mb-5 bg-slate-100 p-1.5 rounded-xl">
                         <button id="btn-pay-cash" onclick="selectPaymentMethod('Cash')" class="flex-1 py-2.5 bg-white shadow-sm rounded-lg text-sm font-bold text-slate-800 transition">Tunai</button>
                         <button id="btn-pay-qris" onclick="selectPaymentMethod('QRIS')" class="flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition">QRIS / E-Wallet</button>
+                        <button id="btn-pay-kasbon" onclick="selectPaymentMethod('Kasbon')" class="flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition">Kasbon</button>
                     </div>
                     <hr class="border-dashed border-slate-200 my-4">
                     <div id="section-cash" class="block">
@@ -163,6 +172,16 @@
                         <p class="text-sm font-bold text-slate-800">Arahkan pelanggan scan QRIS</p>
                         <p class="text-[11px] font-medium text-orange-500 mt-1 bg-orange-50 px-3 py-1 rounded-full"><i data-lucide="alert-circle" class="w-3 h-3 inline mr-1"></i>Pastikan saldo masuk sebelum klik Selesai</p>
                     </div>
+                    <div id="section-kasbon" class="hidden flex-col mb-6">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Pilih Pelanggan (Member)</label>
+                        <select id="kasbon-customer" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold text-slate-800 outline-none focus:border-orange-500 mb-2">
+                            <option value="">Pilih pelanggan...</option>
+                        </select>
+                        <div class="bg-orange-50 p-3 rounded-lg border border-orange-100 flex items-start space-x-2">
+                            <i data-lucide="info" class="w-4 h-4 text-orange-500 shrink-0 mt-0.5"></i>
+                            <p class="text-[11px] text-orange-700 font-medium">Tagihan ini akan menjadi Piutang. Tagih dan lunasi nanti melalui menu HRM & Pelanggan.</p>
+                        </div>
+                    </div>
                     <button onclick="completeTransaction()" id="btn-complete-pay" class="w-full bg-slate-300 text-slate-500 font-bold py-4 rounded-xl transition flex justify-center items-center pointer-events-none">
                         <i data-lucide="check-circle" class="w-5 h-5 mr-2"></i><span>Selesaikan Transaksi</span>
                     </button>
@@ -180,7 +199,9 @@
                     <hr class="border-dashed border-slate-300 my-2">
                     <div id="rcpt-items" class="space-y-2 mb-3"></div>
                     <hr class="border-dashed border-slate-300 my-2">
-                    <div class="flex justify-between font-bold mb-1"><span>TOTAL</span><span id="rcpt-total">Rp 0</span></div>
+                    <div class="flex justify-between font-bold mb-1"><span>SUBTOTAL</span><span id="rcpt-subtotal">Rp 0</span></div>
+                    <div class="flex justify-between text-xs text-slate-500 mb-1" id="rcpt-tax-row"><span id="rcpt-tax-label">PPN 11%</span><span id="rcpt-tax">Rp 0</span></div>
+                    <div class="flex justify-between text-sm font-extrabold mt-2 mb-2 pt-2 border-t border-dashed border-slate-300"><span>TOTAL</span><span id="rcpt-total">Rp 0</span></div>
                     <div class="flex justify-between text-xs text-slate-500 mb-1"><span class="receipt-method-text">Tunai</span><span id="rcpt-cash">Rp 0</span></div>
                     <div class="flex justify-between text-xs text-slate-500"><span>Kembali</span><span id="rcpt-change">Rp 0</span></div>
                     <hr class="border-dashed border-slate-300 my-4">
@@ -238,11 +259,20 @@
             </div>
         </div>
 
+    </main>
+
+    <nav class="md:hidden bottom-nav fixed bottom-0 w-full bg-white flex justify-around items-end px-2 pt-2 pb-5 z-50 no-print">
+        <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Home</span></a>
+        <a href="inventory.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="package" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Stok</span></a>
+        <div class="w-16 flex justify-center"><a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6 hover:scale-105 transition-transform"><i data-lucide="scan-line" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-0.5">Sale</span></a></div>
+        <a href="supplier.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="users" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Supplier</span></a>
+        <a href="more.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">More</span></a>
+    </nav>
+
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <script src="js/db.js"></script> 
     <script src="js/sync.js"></script> 
     <script src="js/pages/pos.js"></script> 
     <script src="js/app.js"></script> 
-    <script>lucide.createIcons();</script>
 </body>
 </html>
