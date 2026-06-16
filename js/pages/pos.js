@@ -3,6 +3,7 @@
 let cart = [];
 let html5QrcodeScanner = null;
 let currentCheckoutTotal = 0;
+let currentCategoryFilter = 'Semua';
 
 function imgError(image) {
     image.onerror = "";
@@ -10,10 +11,38 @@ function imgError(image) {
     return true;
 }
 
+// =========================================================
+// FITUR BARU: Generate Kategori Dinamis (Seperti di Inventori)
+// =========================================================
+async function generateCategoryTabs() {
+    try {
+        const products = await db.products.toArray();
+        const uniqueCategories = [...new Set(products.map(p => p.category))].filter(Boolean);
+        const tabsContainer = document.getElementById('category-tabs');
+        if (!tabsContainer) return;
+        
+        let html = `
+            <button onclick="turboSync()" class="md:hidden px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-sm border border-emerald-200 whitespace-nowrap flex items-center space-x-1 hover:bg-emerald-100 transition">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Sync</span>
+            </button>
+            <button onclick="changeCategory('Semua', this)" class="cat-btn px-5 py-2 rounded-xl ${currentCategoryFilter === 'Semua' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-50 text-slate-600 border border-slate-200'} font-bold text-sm whitespace-nowrap transition">Semua</button>
+        `;
+
+        uniqueCategories.forEach(cat => {
+            const isActive = currentCategoryFilter === cat;
+            html += `<button onclick="changeCategory('${cat}', this)" class="cat-btn px-5 py-2 rounded-xl ${isActive ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-50 text-slate-600 border border-slate-200'} font-medium text-sm whitespace-nowrap hover:bg-slate-100 transition">${cat}</button>`;
+        });
+        
+        tabsContainer.innerHTML = html;
+        lucide.createIcons();
+    } catch (error) { console.error(error); }
+}
+
 function changeCategory(category, btnElement) {
+    currentCategoryFilter = category;
     const allBtns = document.querySelectorAll('.cat-btn');
     allBtns.forEach(btn => btn.className = 'cat-btn px-5 py-2 rounded-xl bg-slate-50 text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-100 transition');
-    btnElement.className = 'cat-btn px-5 py-2 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition';
+    if(btnElement) btnElement.className = 'cat-btn px-5 py-2 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition';
     renderProducts(category);
 }
 
@@ -36,36 +65,40 @@ function renderFilteredProducts(products) {
 
     if (products.length === 0) {
         grid.innerHTML = '<div class="col-span-full text-center mt-20"><div class="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="package-x" class="w-10 h-10 text-slate-400"></i></div><p class="text-slate-500 font-medium text-sm">Produk tidak ditemukan.</p></div>';
-        lucide.createIcons();
-        return;
+        lucide.createIcons(); return;
     }
 
     products.forEach(p => {
         const inCart = cart.find(item => String(item.barcode) === String(p.barcode));
-        const card = document.createElement('div');
+        const isOutOfStock = p.stock <= 0; // PENGECEKAN STOK
         
-        card.className = `bg-white rounded-2xl p-3 shadow-sm border flex flex-col relative h-full transition-all duration-200 ${inCart ? 'border-orange-500 ring-2 ring-orange-100' : 'border-slate-100 hover:border-slate-300 hover:shadow-md'}`;
+        const card = document.createElement('div');
+        // Jika habis, buat kartu meredup (opacity-60) dan tidak bisa diklik
+        card.className = `bg-white rounded-2xl p-3 shadow-sm border flex flex-col relative h-full transition-all duration-200 
+            ${isOutOfStock ? 'opacity-60 grayscale-[50%]' : (inCart ? 'border-orange-500 ring-2 ring-orange-100' : 'border-slate-100 hover:border-slate-300 hover:shadow-md')}`;
 
         card.innerHTML = `
             <span class="absolute top-2 left-2 z-10 bg-white/90 backdrop-blur text-slate-800 text-[10px] font-extrabold px-2 py-1 rounded-md shadow-sm border border-slate-100">Rp ${Number(p.price).toLocaleString('id-ID')}</span>
             
-            <div onclick='openProductPreview(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="h-28 w-full bg-slate-50 rounded-xl mb-3 flex items-center justify-center p-2 overflow-hidden relative cursor-pointer group">
-                <div class="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><i data-lucide="eye" class="text-slate-700 w-6 h-6"></i></div>
+            <div onclick='${isOutOfStock ? "" : `openProductPreview(${JSON.stringify(p).replace(/'/g, "&apos;")})`}' class="h-28 w-full bg-slate-50 rounded-xl mb-3 flex items-center justify-center p-2 overflow-hidden relative ${isOutOfStock ? "" : "cursor-pointer group"}">
+                ${isOutOfStock ? '<div class="absolute inset-0 bg-slate-900/40 flex items-center justify-center z-20 rounded-xl"><span class="bg-rose-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">HABIS</span></div>' : '<div class="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><i data-lucide="eye" class="text-slate-700 w-6 h-6"></i></div>'}
                 <img src="${p.image_url}" onerror="imgError(this);" class="max-h-full object-contain mix-blend-multiply transition-transform group-hover:scale-110 duration-300" alt="${p.name}">
             </div>
             
             <h3 class="text-xs font-bold text-slate-800 line-clamp-2 leading-tight mb-3 px-1">${p.name}</h3>
             <div class="mt-auto"></div>
             
-            ${inCart ? `
-            <div class="flex items-center justify-between bg-orange-50 rounded-xl p-1 border border-orange-200 h-9">
-                <button onclick="updateQty('${p.barcode}', -1)" class="w-8 h-full bg-white text-orange-500 rounded-lg font-bold shadow-sm hover:bg-orange-100 flex items-center justify-center transition"><i data-lucide="minus" class="w-4 h-4"></i></button>
-                <span class="text-sm font-extrabold text-slate-800">${inCart.qty}</span>
-                <button onclick="updateQty('${p.barcode}', 1)" class="w-8 h-full bg-orange-500 text-white rounded-lg font-bold shadow-sm hover:bg-orange-600 flex items-center justify-center transition"><i data-lucide="plus" class="w-4 h-4"></i></button>
-            </div>
+            ${isOutOfStock ? `
+                <button class="w-full h-9 bg-slate-200 text-slate-400 text-xs font-bold rounded-xl cursor-not-allowed">Kosong</button>
+            ` : (inCart ? `
+                <div class="flex items-center justify-between bg-orange-50 rounded-xl p-1 border border-orange-200 h-9">
+                    <button onclick="updateQty('${p.barcode}', -1)" class="w-8 h-full bg-white text-orange-500 rounded-lg font-bold shadow-sm hover:bg-orange-100 flex items-center justify-center transition"><i data-lucide="minus" class="w-4 h-4"></i></button>
+                    <span class="text-sm font-extrabold text-slate-800">${inCart.qty}</span>
+                    <button onclick="updateQty('${p.barcode}', 1)" class="w-8 h-full bg-orange-500 text-white rounded-lg font-bold shadow-sm hover:bg-orange-600 flex items-center justify-center transition"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                </div>
             ` : `
-            <button onclick='addToCart(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="w-full h-9 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition shadow-sm tracking-wide">Tambah</button>
-            `}
+                <button onclick='addToCart(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="w-full h-9 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition shadow-sm tracking-wide">Tambah</button>
+            `)}
         `;
         grid.appendChild(card);
     });
@@ -74,47 +107,29 @@ function renderFilteredProducts(products) {
 
 function addToCart(product) {
     const existing = cart.find(item => String(item.barcode) === String(product.barcode));
-    
-    // Validasi Stok (Mencegah penjualan melebihi stok yang ada)
     const currentQtyInCart = existing ? existing.qty : 0;
-    if (currentQtyInCart >= product.stock) {
-        alert(`Stok ${product.name} tidak mencukupi! (Sisa: ${product.stock})`);
-        return;
-    }
+    if (currentQtyInCart >= product.stock) { alert(`Stok tidak mencukupi! (Sisa: ${product.stock})`); return; }
 
     if (!existing) cart.push({ ...product, qty: 1 });
     else existing.qty += 1;
     
-    updateCartUI();
-    refreshCurrentGrid();
-    closeProductModal(); 
+    updateCartUI(); refreshCurrentGrid(); closeProductModal(); 
 }
 
 function updateQty(barcode, change) {
     const item = cart.find(item => String(item.barcode) === String(barcode));
     if (item) {
-        // Cek stok saat ditambah dari tombol plus
-        if (change > 0 && item.qty + change > item.stock) {
-            alert(`Maksimal stok ${item.name} adalah ${item.stock}`);
-            return;
-        }
-
+        if (change > 0 && item.qty + change > item.stock) { alert(`Stok ${item.name} sisa ${item.stock}`); return; }
         item.qty += parseInt(change);
         if (item.qty <= 0) cart = cart.filter(i => String(i.barcode) !== String(barcode)); 
     }
-    updateCartUI();
-    refreshCurrentGrid();
+    updateCartUI(); refreshCurrentGrid();
 }
 
 function refreshCurrentGrid() {
     const searchInput = document.getElementById('search-input');
-    if(searchInput && searchInput.value) { 
-        triggerSearch(searchInput.value); 
-    } else {
-        const activeBtn = document.querySelector('.cat-btn.bg-orange-500');
-        const currentCategory = activeBtn ? activeBtn.innerText.trim() : 'Semua';
-        renderProducts(currentCategory);
-    }
+    if(searchInput && searchInput.value) triggerSearch(searchInput.value); 
+    else renderProducts(currentCategoryFilter);
 }
 
 function updateCartUI() {
@@ -123,10 +138,7 @@ function updateCartUI() {
     currentCheckoutTotal = totalPrice; 
 
     const badge = document.getElementById('mobile-cart-badge');
-    if(badge) {
-        badge.textContent = totalItems;
-        badge.style.display = totalItems > 0 ? 'flex' : 'none';
-    }
+    if(badge) { badge.textContent = totalItems; badge.style.display = totalItems > 0 ? 'flex' : 'none'; }
     
     const totalPriceEl = document.getElementById('total-price');
     if(totalPriceEl) totalPriceEl.textContent = `Rp ${totalPrice.toLocaleString('id-ID')}`;
@@ -136,7 +148,6 @@ function updateCartUI() {
 
     const cartContainer = document.getElementById('cart-container');
     if(!cartContainer) return;
-
     cartContainer.innerHTML = ''; 
 
     if (cart.length === 0) {
@@ -171,8 +182,7 @@ function updateCartUI() {
 function openProductPreview(p) {
     const modal = document.getElementById('product-modal');
     if(!modal) return;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
     setTimeout(() => { document.getElementById('product-modal-content').classList.remove('translate-y-full'); }, 10);
     
     document.getElementById('preview-img').src = p.image_url;
@@ -180,8 +190,24 @@ function openProductPreview(p) {
     document.getElementById('preview-category').textContent = p.category;
     document.getElementById('preview-barcode').innerHTML = `<i data-lucide="barcode" class="w-3 h-3 inline mr-1"></i>${p.barcode}`;
     document.getElementById('preview-price').textContent = `Rp ${Number(p.price).toLocaleString('id-ID')}`;
-    document.getElementById('preview-stock').textContent = `${p.stock} Pcs`;
-    document.getElementById('preview-add-btn').onclick = () => addToCart(p);
+    
+    const stockEl = document.getElementById('preview-stock');
+    const btnEl = document.getElementById('preview-add-btn');
+    const btnText = document.getElementById('preview-btn-text');
+
+    if(p.stock <= 0) {
+        stockEl.textContent = `HABIS`;
+        stockEl.className = "text-lg font-extrabold text-rose-500";
+        btnEl.className = "w-full bg-slate-300 text-slate-500 font-bold py-4 rounded-xl shadow-none flex justify-center items-center space-x-2 cursor-not-allowed pointer-events-none";
+        btnText.textContent = "Stok Kosong";
+        btnEl.onclick = null;
+    } else {
+        stockEl.textContent = `${p.stock} Pcs`;
+        stockEl.className = "text-lg font-extrabold text-emerald-500";
+        btnEl.className = "w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-slate-800 transition flex justify-center items-center space-x-2";
+        btnText.textContent = "Tambah ke Keranjang";
+        btnEl.onclick = () => addToCart(p);
+    }
     lucide.createIcons();
 }
 
@@ -189,27 +215,19 @@ function closeProductModal() {
     const content = document.getElementById('product-modal-content');
     const modal = document.getElementById('product-modal');
     if(content) content.classList.add('translate-y-full');
-    setTimeout(() => {
-        if(modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-    }, 300);
+    setTimeout(() => { if(modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } }, 300);
 }
 
 let currentPaymentMethod = 'Cash'; 
 
-// Checkout
 function processPayment() {
     if(cart.length === 0) return alert('Keranjang masih kosong!');
-    
     const cartPanel = document.getElementById('cart-panel');
     if (cartPanel && cartPanel.classList.contains('cart-slide-up')) toggleMobileCart();
 
     document.getElementById('checkout-modal').classList.remove('hidden');
     document.getElementById('checkout-modal').classList.add('flex');
     document.getElementById('checkout-total').textContent = `Rp ${currentCheckoutTotal.toLocaleString('id-ID')}`;
-    
     selectPaymentMethod('Cash');
     
     const quickCashContainer = document.getElementById('quick-cash-buttons');
@@ -221,13 +239,9 @@ function processPayment() {
         const btn = document.createElement('button');
         btn.className = "bg-orange-50 border border-orange-200 text-orange-600 font-bold py-2 rounded-lg text-sm hover:bg-orange-100 transition";
         btn.textContent = amount === currentCheckoutTotal ? "Uang Pas" : `${(amount/1000)}k`;
-        btn.onclick = () => {
-            document.getElementById('cash-input').value = amount;
-            calculateChange();
-        };
+        btn.onclick = () => { document.getElementById('cash-input').value = amount; calculateChange(); };
         quickCashContainer.appendChild(btn);
     });
-    
     lucide.createIcons();
 }
 
@@ -263,7 +277,6 @@ function closeCheckout() {
 
 function calculateChange() {
     if (currentPaymentMethod !== 'Cash') return;
-
     const cashInput = parseInt(document.getElementById('cash-input').value) || 0;
     const change = cashInput - currentCheckoutTotal;
     const changeElement = document.getElementById('checkout-change');
@@ -298,23 +311,16 @@ async function completeTransaction() {
     const dateStr = new Date().toLocaleString('id-ID', options);
 
     try {
-        const saleId = await db.sales.add({
-            receipt_no: receiptNo, date: new Date().toISOString(), total: currentCheckoutTotal,
-            payment_method: paymentText, amount_paid: cashInput, change: change, sync_status: 0 
-        });
+        const saleId = await db.sales.add({ receipt_no: receiptNo, date: new Date().toISOString(), total: currentCheckoutTotal, payment_method: paymentText, amount_paid: cashInput, change: change, sync_status: 0 });
 
         for (let item of cart) {
-            await db.sale_items.add({
-                sale_id: saleId, product_id: item.barcode, name: item.name,
-                qty: item.qty, price: item.price, subtotal: item.price * item.qty
-            });
+            await db.sale_items.add({ sale_id: saleId, product_id: item.barcode, name: item.name, qty: item.qty, price: item.price, subtotal: item.price * item.qty });
             const prod = await db.products.where('barcode').equals(item.barcode).first() || await db.products.where('barcode').equals(Number(item.barcode)).first();
             if(prod) await db.products.update(prod.id, {stock: prod.stock - item.qty});
         }
 
         document.getElementById('rcpt-no').textContent = receiptNo;
         document.getElementById('rcpt-date').textContent = dateStr;
-        
         const rcptMethodElements = document.querySelectorAll('.receipt-method-text');
         if(rcptMethodElements.length > 0) rcptMethodElements.forEach(el => el.textContent = paymentText);
 
@@ -323,10 +329,7 @@ async function completeTransaction() {
         cart.forEach(item => {
             rcptItems.innerHTML += `
                 <div class="flex justify-between items-start">
-                    <div class="flex-1 pr-2">
-                        <span class="block">${item.name}</span>
-                        <span class="text-slate-500">${item.qty} x ${Number(item.price).toLocaleString('id-ID')}</span>
-                    </div>
+                    <div class="flex-1 pr-2"><span class="block">${item.name}</span><span class="text-slate-500">${item.qty} x ${Number(item.price).toLocaleString('id-ID')}</span></div>
                     <span>${(item.price * item.qty).toLocaleString('id-ID')}</span>
                 </div>
             `;
@@ -336,18 +339,18 @@ async function completeTransaction() {
         document.getElementById('rcpt-cash').textContent = `Rp ${cashInput.toLocaleString('id-ID')}`;
         document.getElementById('rcpt-change').textContent = `Rp ${change.toLocaleString('id-ID')}`;
 
-        cart = [];
-        closeCheckout(); updateCartUI(); refreshCurrentGrid();
+        cart = []; closeCheckout(); updateCartUI(); 
+        
+        // Refresh grid untuk update visual stok yang baru saja berkurang
+        await generateCategoryTabs();
+        refreshCurrentGrid();
 
         document.getElementById('receipt-modal').classList.remove('hidden');
         document.getElementById('receipt-modal').classList.add('flex');
 
         if (navigator.onLine && typeof syncSalesToCloud === 'function') syncSalesToCloud(true);
 
-    } catch (error) {
-        console.error("Gagal memproses transaksi:", error);
-        alert("Terjadi kesalahan saat memproses data.");
-    }
+    } catch (error) { console.error(error); alert("Terjadi kesalahan sistem."); }
 }
 
 function closeReceipt() {
@@ -359,78 +362,36 @@ function toggleMobileCart() {
     const cartPanel = document.getElementById('cart-panel');
     const overlay = document.getElementById('cart-overlay');
     if (!cartPanel || !overlay) return;
-
-    if (cartPanel.classList.contains('cart-slide-down')) {
-        cartPanel.classList.replace('cart-slide-down', 'cart-slide-up');
-        overlay.classList.remove('hidden');
-    } else {
-        cartPanel.classList.replace('cart-slide-up', 'cart-slide-down');
-        overlay.classList.add('hidden');
-    }
+    if (cartPanel.classList.contains('cart-slide-down')) { cartPanel.classList.replace('cart-slide-down', 'cart-slide-up'); overlay.classList.remove('hidden'); } 
+    else { cartPanel.classList.replace('cart-slide-up', 'cart-slide-down'); overlay.classList.add('hidden'); }
 }
 
-// ==============================================================
-// PERBAIKAN: SCANNER BARCODE 30 FPS + ANTI-CRASH CLOSE MODAL
-// ==============================================================
 function toggleScanner() {
     const modal = document.getElementById('scanner-modal');
     if (!modal) return;
-
     if (modal.classList.contains('hidden')) {
-        // Buka Modal
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        
-        // Buat objek scanner baru
+        modal.classList.remove('hidden'); modal.classList.add('flex');
         html5QrcodeScanner = new Html5Qrcode("reader");
         html5QrcodeScanner.start(
-            { facingMode: "environment" }, 
-            { 
-                fps: 30, // Dipercepat agar peka pergerakan
-                qrbox: { width: 280, height: 120 }, // Bentuk panjang spesifik barcode 1D
-                aspectRatio: 1.0 
-            }, 
+            { facingMode: "environment" }, { fps: 30, qrbox: { width: 280, height: 120 }, aspectRatio: 1.0 }, 
             (decodedText) => {
-                // Saat sukses membaca:
-                // 1. Matikan kamera DULU
                 html5QrcodeScanner.stop().then(() => {
-                    // 2. Tutup Modal Manual (Jangan panggil toggleScanner lagi agar tidak bentrok)
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                    
-                    // 3. Eksekusi pencarian barang
+                    modal.classList.add('hidden'); modal.classList.remove('flex');
                     cariDanTambahProdukByBarcode(decodedText);
-                }).catch(err => {
-                    console.error("Gagal menghentikan scanner", err);
-                });
-            },
-            (errorMessage) => { /* Abaikan error agar tidak spam console */ }
-        ).catch((err) => {
-            alert("Izin kamera ditolak atau kamera tidak terdeteksi.");
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        });
+                }).catch(err => console.error(err));
+            }, (errorMessage) => {}
+        ).catch((err) => { alert("Izin kamera ditolak."); modal.classList.add('hidden'); modal.classList.remove('flex'); });
     } else {
-        // Jika tombol close (X) dipencet manual
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        if(html5QrcodeScanner) {
-            html5QrcodeScanner.stop().catch(e => console.log(e));
-        }
+        modal.classList.add('hidden'); modal.classList.remove('flex');
+        if(html5QrcodeScanner) html5QrcodeScanner.stop().catch(e => console.log(e));
     }
 }
 
 async function cariDanTambahProdukByBarcode(barcode) {
     const allProducts = await db.products.toArray();
-    // Cari produk menggunakan string ketat
     const product = allProducts.find(p => String(p.barcode) === String(barcode));
-    
-    if(product) {
-        addToCart(product);
-        // Putar suara kecil jika diinginkan di masa depan
-    } else {
-        alert(`❌ Barang dengan barcode "${barcode}" tidak terdaftar di Inventori.`);
-    }
+    if(product) addToCart(product);
+    else alert(`❌ Barang dengan barcode "${barcode}" tidak ditemukan.`);
 }
 
 async function triggerSearch(keyword) {
@@ -442,8 +403,11 @@ async function triggerSearch(keyword) {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof db !== 'undefined') {
-        renderProducts();
-        updateCartUI();
+        setTimeout(async () => {
+            await generateCategoryTabs();
+            renderProducts();
+            updateCartUI();
+        }, 100);
         document.getElementById('search-input')?.addEventListener('input', (e) => triggerSearch(e.target.value));
     }
 });
