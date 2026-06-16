@@ -54,6 +54,7 @@ db.on('populate', function () {
             image_url: "https://lh3.googleusercontent.com/d/1IOMeyvPPYORPcldVrqmcZbPIWCJyUG22" 
         }
     ]);
+    db.suppliers.add({ name: "PT. Gudang Utama", phone: "08123456789", address: "Jl. Industri No 1" });
 });
 
 // Fungsi Helper (Opsional, untuk mengambil pengaturan aplikasi)
