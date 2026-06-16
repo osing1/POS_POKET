@@ -127,6 +127,8 @@ function closeFormModal() {
 }
 
 // 4. Scanner Kamera 30FPS (FULL SCREEN UI)
+// Ganti HANYA fungsi ini di dalam js/pages/inventory.js Anda
+
 function toggleFormScanner() {
     const modal = document.getElementById('form-scanner-modal');
     if (!modal) return;
@@ -135,15 +137,34 @@ function toggleFormScanner() {
         modal.classList.remove('hidden'); 
         modal.classList.add('flex');
         
+        // Bersihkan instance lama jika ada error sebelumnya
+        if(formBarcodeScanner) {
+            formBarcodeScanner.clear();
+        }
+
         formBarcodeScanner = new Html5Qrcode("form-reader");
         
-        // Konfigurasi Layar Penuh
+        // KONFIGURASI BARU KHUSUS UNTUK BARCODE PABRIKAN (1D)
         formBarcodeScanner.start(
-            { facingMode: "environment" }, 
+            // Paksa gunakan kamera belakang dengan resolusi lebih baik jika tersedia
+            { facingMode: "environment", focusMode: "continuous" }, 
             { 
-                fps: 15, // Cukup untuk responsif, tidak over-heat
-                aspectRatio: 1.0 // Menjaga grid kotak sempurna
-                // qrbox dihilangkan agar full screen
+                fps: 10, // Turunkan ke 10 agar mesin punya waktu lebih lama mencerna gambar 1D yang rumit
+                
+                // HAPUS aspectRatio: 1.0 agar ujung barcode tidak terpotong mesin
+                
+                // Gunakan qrbox berbentuk persegi panjang untuk fokus pembacaan mesin (CSS Anda sudah menyembunyikan tampilannya)
+                qrbox: { width: 300, height: 150 },
+                
+                // PERINTAH PENTING: Fokuskan mesin mencari barcode ritel pabrikan
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39
+                ]
             }, 
             (decodedText) => {
                 formBarcodeScanner.stop().then(() => {
@@ -152,10 +173,10 @@ function toggleFormScanner() {
                     document.getElementById('form-barcode').value = decodedText;
                 }).catch(err => console.error(err));
             }, (errorMessage) => {
-                // Abaikan error background
+                // Abaikan error background agar tidak spam log
             }
         ).catch((err) => { 
-            alert("Akses kamera ditolak."); 
+            alert("Gagal mengakses kamera. Pastikan browser memiliki izin."); 
             modal.classList.add('hidden'); 
             modal.classList.remove('flex'); 
         });
