@@ -3,7 +3,10 @@
 let cart = [];
 let html5QrcodeScanner = null;
 let currentCheckoutTotal = 0;
+let currentSubtotal = 0; // BARU: Subtotal sebelum pajak
+let currentTax = 0; // BARU: Nilai pajak
 let currentCategoryFilter = 'Semua';
+let isPpnActive = false; // BARU: Status PPN dari Pengaturan
 
 function imgError(image) {
     image.onerror = "";
@@ -134,17 +137,35 @@ function refreshCurrentGrid() {
 
 function updateCartUI() {
     const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
-    const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-    currentCheckoutTotal = totalPrice; 
+    currentSubtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0); // BARU: Subtotal Sebelum Pajak
+    
+    // BARU: Hitung PPN (11%) Jika Fitur Dinyalakan di Pengaturan
+    currentTax = isPpnActive ? Math.round(currentSubtotal * 0.11) : 0;
+    currentCheckoutTotal = currentSubtotal + currentTax; 
 
+    // Update Label UI
     const badge = document.getElementById('mobile-cart-badge');
     if(badge) { badge.textContent = totalItems; badge.style.display = totalItems > 0 ? 'flex' : 'none'; }
     
-    const totalPriceEl = document.getElementById('total-price');
-    if(totalPriceEl) totalPriceEl.textContent = `Rp ${totalPrice.toLocaleString('id-ID')}`;
-    
     const desktopItemCount = document.getElementById('desktop-item-count');
     if(desktopItemCount) desktopItemCount.textContent = `${totalItems} Item`;
+
+    // Tampilkan Rincian Tagihan
+    const subtotalPriceEl = document.getElementById('subtotal-price');
+    if(subtotalPriceEl) subtotalPriceEl.textContent = `Rp ${currentSubtotal.toLocaleString('id-ID')}`;
+    
+    const totalPriceEl = document.getElementById('total-price');
+    if(totalPriceEl) totalPriceEl.textContent = `Rp ${currentCheckoutTotal.toLocaleString('id-ID')}`;
+
+    const ppnRow = document.getElementById('ppn-row');
+    if(ppnRow) {
+        if(isPpnActive && totalItems > 0) {
+            ppnRow.classList.remove('hidden'); ppnRow.classList.add('flex');
+            document.getElementById('ppn-price').textContent = `Rp ${currentTax.toLocaleString('id-ID')}`;
+        } else {
+            ppnRow.classList.remove('flex'); ppnRow.classList.add('hidden');
+        }
+    }
 
     const cartContainer = document.getElementById('cart-container');
     if(!cartContainer) return;
@@ -220,10 +241,21 @@ function closeProductModal() {
 
 let currentPaymentMethod = 'Cash'; 
 
-function processPayment() {
+// =========================================================
+// BARU: PROSES PEMBAYARAN MENDUKUNG KASBON PELANGGAN
+// =========================================================
+async function processPayment() {
     if(cart.length === 0) return alert('Keranjang masih kosong!');
     const cartPanel = document.getElementById('cart-panel');
     if (cartPanel && cartPanel.classList.contains('cart-slide-up')) toggleMobileCart();
+
+    // BARU: Tarik Data Pelanggan ke Dropdown Kasbon
+    const customers = await db.customers.toArray();
+    const custSelect = document.getElementById('kasbon-customer');
+    if(custSelect) {
+        custSelect.innerHTML = '<option value="">Pilih pelanggan...</option>';
+        customers.forEach(c => { custSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
+    }
 
     document.getElementById('checkout-modal').classList.remove('hidden');
     document.getElementById('checkout-modal').classList.add('flex');
@@ -247,25 +279,36 @@ function processPayment() {
 
 function selectPaymentMethod(method) {
     currentPaymentMethod = method;
-    const btnCash = document.getElementById('btn-pay-cash');
-    const btnQris = document.getElementById('btn-pay-qris');
-    const secCash = document.getElementById('section-cash');
-    const secQris = document.getElementById('section-qris');
+    
+    // Reset warna semua tombol
+    ['btn-pay-cash', 'btn-pay-qris', 'btn-pay-kasbon'].forEach(id => {
+        const btn = document.getElementById(id);
+        if(btn) btn.className = "flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition";
+    });
+    
+    // Sembunyikan semua section
+    ['section-cash', 'section-qris', 'section-kasbon'].forEach(id => {
+        const sec = document.getElementById(id);
+        if(sec) { sec.classList.remove('flex', 'block'); sec.classList.add('hidden'); }
+    });
+
     const btnComplete = document.getElementById('btn-complete-pay');
 
+    // Tampilkan sesuai pilihan
     if (method === 'Cash') {
-        btnCash.className = "flex-1 py-2.5 bg-white shadow-sm rounded-lg text-sm font-bold text-slate-800 transition";
-        btnQris.className = "flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition";
-        secCash.classList.remove('hidden'); secCash.classList.add('block');
-        secQris.classList.remove('flex'); secQris.classList.add('hidden');
-        document.getElementById('cash-input').value = '';
-        calculateChange(); 
-    } else {
-        btnQris.className = "flex-1 py-2.5 bg-white shadow-sm rounded-lg text-sm font-bold text-slate-800 transition";
-        btnCash.className = "flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition";
-        secQris.classList.remove('hidden'); secQris.classList.add('flex');
-        secCash.classList.remove('block'); secCash.classList.add('hidden');
+        document.getElementById('btn-pay-cash').className = "flex-1 py-2.5 bg-white shadow-sm rounded-lg text-sm font-bold text-slate-800 transition";
+        document.getElementById('section-cash').classList.remove('hidden'); document.getElementById('section-cash').classList.add('block');
+        document.getElementById('cash-input').value = ''; calculateChange(); 
+    } else if (method === 'QRIS') {
+        document.getElementById('btn-pay-qris').className = "flex-1 py-2.5 bg-white shadow-sm rounded-lg text-sm font-bold text-slate-800 transition";
+        document.getElementById('section-qris').classList.replace('hidden', 'flex');
         btnComplete.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg transition flex justify-center items-center cursor-pointer";
+        btnComplete.style.pointerEvents = 'auto';
+    } else if (method === 'Kasbon') {
+        // BARU: UI Kasbon
+        document.getElementById('btn-pay-kasbon').className = "flex-1 py-2.5 bg-white shadow-sm rounded-lg text-sm font-bold text-slate-800 transition";
+        document.getElementById('section-kasbon').classList.replace('hidden', 'flex');
+        btnComplete.className = "w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl shadow-lg transition flex justify-center items-center cursor-pointer";
         btnComplete.style.pointerEvents = 'auto';
     }
 }
@@ -298,20 +341,33 @@ function calculateChange() {
 async function completeTransaction() {
     let cashInput = currentCheckoutTotal;
     let change = 0;
-    let paymentText = 'QRIS';
+    let paymentText = currentPaymentMethod; 
+    let statusSale = 'Lunas';
+    let customerId = null;
 
     if (currentPaymentMethod === 'Cash') {
         cashInput = parseInt(document.getElementById('cash-input').value) || 0;
         change = cashInput - currentCheckoutTotal;
         paymentText = 'Tunai';
+    } else if (currentPaymentMethod === 'Kasbon') {
+        const custSelect = document.getElementById('kasbon-customer').value;
+        if(!custSelect) return alert("Pilih Pelanggan terlebih dahulu jika ingin Kasbon!");
+        customerId = parseInt(custSelect);
+        cashInput = 0; 
+        change = 0;
+        statusSale = 'Piutang';
     }
     
     const receiptNo = 'INV-' + new Date().getTime().toString().slice(-6);
-    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
-    const dateStr = new Date().toLocaleString('id-ID', options);
+    const dateStr = new Date().toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
     try {
-        const saleId = await db.sales.add({ receipt_no: receiptNo, date: new Date().toISOString(), total: currentCheckoutTotal, payment_method: paymentText, amount_paid: cashInput, change: change, sync_status: 0 });
+        // BARU: Menambahkan customer_id dan status Piutang
+        const saleId = await db.sales.add({ 
+            receipt_no: receiptNo, date: new Date().toISOString(), total: currentCheckoutTotal, 
+            payment_method: paymentText, amount_paid: cashInput, change: change, 
+            customer_id: customerId, status: statusSale, sync_status: 0 
+        });
 
         for (let item of cart) {
             await db.sale_items.add({ sale_id: saleId, product_id: item.barcode, name: item.name, qty: item.qty, price: item.price, subtotal: item.price * item.qty });
@@ -319,32 +375,42 @@ async function completeTransaction() {
             if(prod) await db.products.update(prod.id, {stock: prod.stock - item.qty});
         }
 
+        // BARU: STRUK DINAMIS DENGAN PPN
         document.getElementById('rcpt-no').textContent = receiptNo;
         document.getElementById('rcpt-date').textContent = dateStr;
-        const rcptMethodElements = document.querySelectorAll('.receipt-method-text');
-        if(rcptMethodElements.length > 0) rcptMethodElements.forEach(el => el.textContent = paymentText);
+        document.querySelectorAll('.receipt-method-text').forEach(el => el.textContent = paymentText);
 
         const rcptItems = document.getElementById('rcpt-items');
         rcptItems.innerHTML = '';
         cart.forEach(item => {
             rcptItems.innerHTML += `
-                <div class="flex justify-between items-start">
+                <div class="flex justify-between items-start text-xs">
                     <div class="flex-1 pr-2"><span class="block">${item.name}</span><span class="text-slate-500">${item.qty} x ${Number(item.price).toLocaleString('id-ID')}</span></div>
                     <span>${(item.price * item.qty).toLocaleString('id-ID')}</span>
                 </div>
             `;
         });
 
+        const rcptSubEl = document.getElementById('rcpt-subtotal');
+        if(rcptSubEl) rcptSubEl.textContent = `Rp ${currentSubtotal.toLocaleString('id-ID')}`;
+        
+        const rcptTaxRow = document.getElementById('rcpt-tax-row');
+        if(rcptTaxRow) {
+            if(isPpnActive) {
+                rcptTaxRow.classList.remove('hidden'); rcptTaxRow.classList.add('flex');
+                document.getElementById('rcpt-tax').textContent = `Rp ${currentTax.toLocaleString('id-ID')}`;
+            } else {
+                rcptTaxRow.classList.remove('flex'); rcptTaxRow.classList.add('hidden');
+            }
+        }
+
         document.getElementById('rcpt-total').textContent = `Rp ${currentCheckoutTotal.toLocaleString('id-ID')}`;
         document.getElementById('rcpt-cash').textContent = `Rp ${cashInput.toLocaleString('id-ID')}`;
         document.getElementById('rcpt-change').textContent = `Rp ${change.toLocaleString('id-ID')}`;
 
         cart = []; closeCheckout(); updateCartUI(); 
+        await generateCategoryTabs(); refreshCurrentGrid();
         
-        // Refresh grid untuk update visual stok yang baru saja berkurang
-        await generateCategoryTabs();
-        refreshCurrentGrid();
-
         document.getElementById('receipt-modal').classList.remove('hidden');
         document.getElementById('receipt-modal').classList.add('flex');
 
@@ -379,7 +445,6 @@ function toggleScanner() {
         
         html5QrcodeScanner = new Html5Qrcode("reader");
         
-        // Konfigurasi Layar Penuh (Tanpa kotak qrbox agar fokus kamera tidak terganggu)
         html5QrcodeScanner.start(
             { facingMode: "environment" }, 
             { 
@@ -387,7 +452,6 @@ function toggleScanner() {
                 aspectRatio: 1.0 
             }, 
             (decodedText) => {
-                // Berhasil scan -> Matikan kamera dulu -> Tutup modal -> Cari barang
                 html5QrcodeScanner.stop().then(() => {
                     modal.classList.add('hidden'); 
                     modal.classList.remove('flex');
@@ -402,7 +466,6 @@ function toggleScanner() {
             modal.classList.remove('flex'); 
         });
     } else {
-        // Jika tombol close atau kembali dipencet manual
         modal.classList.add('hidden'); 
         modal.classList.remove('flex');
         if(html5QrcodeScanner) html5QrcodeScanner.stop().catch(e => console.log(e));
@@ -423,8 +486,12 @@ async function triggerSearch(keyword) {
     renderFilteredProducts(filtered);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (typeof db !== 'undefined') {
+        // BARU: Cek apakah PPN aktif di Pengaturan
+        const ppnSetting = await getSetting('enable_ppn', 'false');
+        isPpnActive = (ppnSetting === 'true');
+
         setTimeout(async () => {
             await generateCategoryTabs();
             renderProducts();
