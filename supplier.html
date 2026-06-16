@@ -7,77 +7,185 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --bg-body: #f8fafc; }
-        body { background-color: var(--bg-body); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .glass-card { background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 4px 15px -5px rgba(0, 0, 0, 0.05); border-radius: 16px; }
         .bottom-nav { box-shadow: 0 -4px 25px rgba(0,0,0,0.06); border-top-left-radius: 24px; border-top-right-radius: 24px; }
         .btn-sale-float { background: linear-gradient(135deg, #ff7043, #ff5722); transform: translateY(-20px); box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4); border: 4px solid white; }
+        
+        /* Desain Scanner Full Screen Modern */
+        #reader { border: none !important; background: transparent; width: 100%; height: 100%; }
+        #reader video { object-fit: cover !important; border-radius: 32px !important; width: 100% !important; height: 100% !important; }
+        #reader img, #reader a, #reader span { display: none !important; }
+        #qr-shaded-region { display: none !important; }
     </style>
 </head>
-<body class="flex text-slate-800 pb-24 md:pb-0">
+<body class="flex text-slate-800 pb-24 md:pb-0 h-screen overflow-hidden">
 
-    <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden">
+    <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden border-r border-slate-800 no-print">
         <div class="p-6 flex items-center space-x-3 border-b border-slate-800 bg-slate-900">
             <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg"><i data-lucide="pocket" class="text-white"></i></div>
             <h2 class="text-2xl font-extrabold tracking-wide">POS Pocket</h2>
         </div>
-        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900">
+        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6 hide-scrollbar">
             <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="home"></i> <span class="font-medium">Beranda</span></a>
             <a href="inventory.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="package"></i> <span class="font-medium">Inventori</span></a>
             <a href="sale.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="scan-barcode"></i> <span class="font-medium">Kasir / POS</span></a>
-            <a href="supplier.html" class="flex items-center space-x-3 bg-slate-800/80 text-orange-400 p-3.5 rounded-xl border border-slate-700"><i data-lucide="truck"></i> <span class="font-bold">Supplier</span></a>
+            <a href="supplier.html" class="flex items-center space-x-3 bg-slate-800/80 text-orange-400 p-3.5 rounded-xl border border-slate-700 shadow-sm"><i data-lucide="truck"></i> <span class="font-bold">Supplier</span></a>
             <a href="hrm.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="users"></i> <span class="font-medium">Manajemen HRM</span></a>
             <a href="reports.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="bar-chart-2"></i> <span class="font-medium">Laporan</span></a>
         </nav>
     </aside>
 
-    <main class="w-full min-h-screen relative md:ml-[260px] md:w-[calc(100%-260px)] bg-slate-50">
-        <header class="bg-white p-5 flex justify-between items-center shadow-sm sticky top-0 z-40 border-b border-slate-100">
+    <main class="w-full flex flex-col h-screen relative md:ml-[260px] md:w-[calc(100%-260px)] bg-slate-50">
+        
+        <header class="bg-white p-5 flex justify-between items-center shadow-sm shrink-0 border-b border-slate-100 z-20">
             <div>
-                <h1 class="text-xl font-extrabold text-slate-800">Data Supplier</h1>
-                <p class="text-xs font-medium text-slate-500">Kelola distributor produk</p>
+                <h1 class="text-xl font-extrabold text-slate-800">Pembelian & Supplier</h1>
+                <p class="text-xs font-medium text-slate-500">Restock barang & buku hutang</p>
             </div>
-            <button class="bg-slate-800 hover:bg-slate-700 text-white p-2.5 rounded-xl shadow-md transition flex items-center space-x-2">
-                <i data-lucide="plus" class="w-5 h-5"></i>
-                <span class="hidden md:inline font-bold text-sm pr-2">Tambah Baru</span>
-            </button>
         </header>
 
-        <div class="p-5 max-w-5xl mx-auto space-y-4">
-            <div class="glass-card p-4 flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center font-bold text-lg border border-indigo-100">PT</div>
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-800">PT. Distributor Minuman</h3>
-                        <p class="text-xs text-slate-500 mt-0.5"><i data-lucide="phone" class="w-3 h-3 inline mr-1"></i>0812-3456-7890</p>
+        <div class="px-5 py-3 bg-white border-b border-slate-100 flex space-x-2 overflow-x-auto hide-scrollbar shrink-0">
+            <button onclick="switchTab('restock')" id="tab-restock" class="px-5 py-2.5 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition">Restock Barang</button>
+            <button onclick="switchTab('hutang')" id="tab-hutang" class="px-5 py-2.5 rounded-xl bg-slate-50 text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-100 transition">Buku Hutang</button>
+            <button onclick="switchTab('data')" id="tab-data" class="px-5 py-2.5 rounded-xl bg-slate-50 text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-100 transition">Data Supplier</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 hide-scrollbar relative">
+            
+            <div id="view-restock" class="block max-w-4xl mx-auto pb-10">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1 space-y-4">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Pilih Supplier</label>
+                            <select id="supplier-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-3 text-sm font-bold text-slate-700 outline-none focus:border-orange-500 mb-4">
+                                <option value="">Pilih Supplier...</option>
+                            </select>
+                            
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">No. Faktur / Nota</label>
+                            <input type="text" id="invoice-input" placeholder="INV-2026..." class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold outline-none mb-4">
+                            
+                            <button onclick="toggleScanner()" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-slate-800 transition flex justify-center items-center">
+                                <i data-lucide="scan" class="w-5 h-5 mr-2"></i> Scan Barang Masuk
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full min-h-[400px]">
+                            <h3 class="font-extrabold text-sm text-slate-800 mb-4 flex items-center border-b border-slate-100 pb-3">
+                                <i data-lucide="shopping-bag" class="w-4 h-4 mr-2 text-orange-500"></i> Daftar Barang Masuk
+                            </h3>
+                            <div id="restock-cart" class="flex-1 space-y-3 overflow-y-auto mb-4">
+                                </div>
+                            <div class="border-t border-slate-100 pt-4 mt-auto">
+                                <div class="flex justify-between items-end mb-4">
+                                    <span class="text-sm font-bold text-slate-500">Total Tagihan Beli</span>
+                                    <span id="restock-total" class="text-2xl font-extrabold text-orange-500">Rp 0</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button onclick="processRestock('Tempo')" class="bg-rose-50 text-rose-600 border border-rose-200 font-bold py-3 rounded-xl hover:bg-rose-100 transition">
+                                        Catat sbg Kasbon
+                                    </button>
+                                    <button onclick="processRestock('Lunas')" class="bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-md hover:bg-emerald-600 transition">
+                                        Bayar Lunas
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <button class="text-slate-400 hover:text-orange-500 transition"><i data-lucide="chevron-right"></i></button>
             </div>
 
-            <div class="glass-card p-4 flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center font-bold text-lg border border-emerald-100">CV</div>
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-800">CV. Sembako Makmur</h3>
-                        <p class="text-xs text-slate-500 mt-0.5"><i data-lucide="phone" class="w-3 h-3 inline mr-1"></i>0856-7890-1234</p>
+            <div id="view-hutang" class="hidden max-w-5xl mx-auto pb-10">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-5">
+                        <p class="text-xs font-bold text-rose-500 uppercase tracking-wider mb-1">Total Hutang Berjalan</p>
+                        <h3 class="text-2xl font-extrabold text-rose-600" id="total-hutang">Rp 0</h3>
                     </div>
                 </div>
-                <button class="text-slate-400 hover:text-orange-500 transition"><i data-lucide="chevron-right"></i></button>
+                <div id="hutang-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    </div>
+            </div>
+
+            <div id="view-data" class="hidden max-w-5xl mx-auto pb-10">
+                <div class="flex justify-end mb-4">
+                    <button onclick="openSupplierModal()" class="bg-slate-900 text-white font-bold py-2 px-4 rounded-xl shadow-sm hover:bg-slate-800 transition flex items-center text-sm">
+                        <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Tambah Supplier
+                    </button>
+                </div>
+                <div id="supplier-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+        </div>
+
+        <div id="scanner-modal" class="fixed inset-0 bg-slate-300 z-[100] hidden flex-col overflow-hidden">
+            <div class="bg-white rounded-b-[40px] pt-12 pb-8 px-6 shadow-sm z-20 relative shrink-0">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-14 h-14 bg-orange-400 rounded-2xl flex items-center justify-center text-white font-bold shadow-md">
+                            <i data-lucide="scan-line" class="w-7 h-7"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-extrabold text-slate-800">Scan Barang Masuk</h2>
+                            <p class="text-xs text-slate-500 font-medium mt-0.5">Pindai barcode untuk menambah stok</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 relative flex flex-col items-center justify-center p-8">
+                <div class="w-full max-w-sm aspect-square relative rounded-[32px] overflow-hidden shadow-2xl bg-black">
+                    <div id="reader" class="absolute inset-0"></div>
+                    <div class="absolute inset-0 pointer-events-none flex items-center justify-center p-6">
+                        <div class="w-full h-full relative">
+                            <div class="absolute top-0 left-0 w-16 h-16 border-t-[6px] border-l-[6px] border-amber-400 rounded-tl-3xl"></div>
+                            <div class="absolute top-0 right-0 w-16 h-16 border-t-[6px] border-r-[6px] border-amber-400 rounded-tr-3xl"></div>
+                            <div class="absolute bottom-0 left-0 w-16 h-16 border-b-[6px] border-l-[6px] border-amber-400 rounded-bl-3xl"></div>
+                            <div class="absolute bottom-0 right-0 w-16 h-16 border-b-[6px] border-r-[6px] border-amber-400 rounded-br-3xl"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-slate-500 text-center text-sm font-medium mt-10 max-w-xs leading-relaxed">Posisikan barcode horizontal tepat di dalam bingkai.</p>
+            </div>
+
+            <div class="pb-10 px-8 flex justify-center md:justify-start shrink-0">
+                <button onclick="toggleScanner()" class="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-amber-500 transition transform hover:scale-105">
+                    <i data-lucide="arrow-left" class="w-7 h-7"></i>
+                </button>
             </div>
         </div>
+
+        <div id="supplier-modal" class="fixed inset-0 bg-slate-900/60 z-[70] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative">
+                <button onclick="closeSupplierModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+                <h2 class="text-lg font-extrabold text-slate-800 mb-4">Input Data Supplier</h2>
+                <form id="supplier-form" onsubmit="saveSupplier(event)">
+                    <input type="text" id="sup-name" placeholder="Nama PT / Distributor" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-3 outline-none">
+                    <input type="text" id="sup-phone" placeholder="No. Telepon / WA" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-3 outline-none">
+                    <textarea id="sup-address" placeholder="Alamat lengkap" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-4 outline-none"></textarea>
+                    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md">Simpan Supplier</button>
+                </form>
+            </div>
+        </div>
+
     </main>
 
     <nav class="md:hidden bottom-nav fixed bottom-0 w-full bg-white flex justify-around items-end px-2 pt-2 pb-5 z-50">
-        <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Home</span></a>
-        <a href="inventory.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="package" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Stok</span></a>
-        <div class="w-16 flex justify-center"><a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6"><i data-lucide="scan-line" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-0.5">Sale</span></a></div>
+        <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Home</span></a>
+        <a href="inventory.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16"><i data-lucide="package" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Stok</span></a>
+        <div class="w-16 flex justify-center"><a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6 hover:scale-105"><i data-lucide="scan-line" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-0.5">Sale</span></a></div>
         <a href="supplier.html" class="flex flex-col items-center text-orange-500 p-2 w-16"><i data-lucide="users" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-1.5">Supplier</span></a>
-        <a href="more.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">More</span></a>
+        <a href="reports.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16"><i data-lucide="bar-chart-2" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Laporan</span></a>
     </nav>
 
-    <script>lucide.createIcons();</script>
-    <script src="js/app.js"></script>
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="js/db.js"></script> 
+    <script src="js/pages/supplier.js"></script> 
+    <script src="js/app.js"></script> 
 </body>
 </html>
