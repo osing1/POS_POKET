@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POS Pocket - Pengaturan</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .bottom-nav { box-shadow: 0 -4px 25px rgba(0,0,0,0.06); border-top-left-radius: 24px; border-top-right-radius: 24px; }
+        .btn-sale-float { background: linear-gradient(135deg, #ff7043, #ff5722); transform: translateY(-20px); box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4); border: 4px solid white; }
+        
+        /* Toggle Switch CSS */
+        .toggle-checkbox:checked { right: 0; border-color: #f97316; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #f97316; }
+        .toggle-checkbox { right: 4; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
+        .toggle-label { background-color: #cbd5e1; transition: all 0.3s; }
+    </style>
+</head>
+<body class="flex text-slate-800 pb-24 md:pb-0 h-screen overflow-hidden">
+
+    <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden border-r border-slate-800 no-print">
+        <div class="p-6 flex items-center space-x-3 border-b border-slate-800 bg-slate-900">
+            <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg"><i data-lucide="pocket" class="text-white"></i></div>
+            <h2 class="text-2xl font-extrabold tracking-wide">POS Pocket</h2>
+        </div>
+        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6 hide-scrollbar">
+            <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="home"></i> <span class="font-medium">Beranda</span></a>
+            <a href="inventory.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="package"></i> <span class="font-medium">Inventori</span></a>
+            <a href="sale.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="scan-barcode"></i> <span class="font-medium">Kasir / POS</span></a>
+            <a href="supplier.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="truck"></i> <span class="font-medium">Supplier</span></a>
+            <a href="hrm.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="users"></i> <span class="font-medium">Manajemen HRM</span></a>
+            <a href="more.html" class="flex items-center space-x-3 bg-slate-800/80 text-orange-400 p-3.5 rounded-xl border border-slate-700 shadow-sm"><i data-lucide="settings"></i> <span class="font-bold">Pengaturan</span></a>
+        </nav>
+    </aside>
+
+    <main class="w-full flex flex-col h-screen relative md:ml-[260px] md:w-[calc(100%-260px)] bg-slate-50">
+        
+        <header class="bg-white p-5 flex justify-between items-center shadow-sm shrink-0 border-b border-slate-100 z-20">
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800">Menu Lainnya</h1>
+                <p class="text-xs font-medium text-slate-500">Pengaturan aplikasi & database</p>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 hide-scrollbar max-w-3xl mx-auto w-full space-y-6 pb-10">
+            
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-2">Profil Toko</h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-4 border-b border-slate-50 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" onclick="alert('Fitur edit nama toko segera hadir!')">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center"><i data-lucide="store" class="w-5 h-5"></i></div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">Nama Toko / Bisnis</p>
+                                <p class="text-xs text-slate-500 font-medium" id="set-store-name">POS Pocket Store</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300"></i>
+                    </div>
+                    <div class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" onclick="alert('Fitur edit alamat segera hadir!')">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-100 text-blue-500 rounded-xl flex items-center justify-center"><i data-lucide="map-pin" class="w-5 h-5"></i></div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">Alamat di Struk</p>
+                                <p class="text-xs text-slate-500 font-medium truncate w-48">Jl. Teknologi No.1, Jawa Timur</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-2">Preferensi Kasir</h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    
+                    <div class="p-4 border-b border-slate-50 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-emerald-100 text-emerald-500 rounded-xl flex items-center justify-center"><i data-lucide="percent" class="w-5 h-5"></i></div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">Aktifkan PPN (Pajak)</p>
+                                <p class="text-xs text-slate-500 font-medium">Tambahkan 11% otomatis ke tagihan</p>
+                            </div>
+                        </div>
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle-ppn" id="toggle-ppn" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" onchange="toggleSetting('enable_ppn', this.checked)"/>
+                            <label for="toggle-ppn" class="toggle-label block overflow-hidden h-6 rounded-full cursor-pointer"></label>
+                        </div>
+                    </div>
+
+                    <div class="p-4 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-indigo-100 text-indigo-500 rounded-xl flex items-center justify-center"><i data-lucide="lock" class="w-5 h-5"></i></div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">Kunci Layar (PIN Kasir)</p>
+                                <p class="text-xs text-slate-500 font-medium">Minta PIN saat buka aplikasi</p>
+                            </div>
+                        </div>
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle-pin" id="toggle-pin" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" onchange="toggleSetting('enable_pinlock', this.checked)"/>
+                            <label for="toggle-pin" class="toggle-label block overflow-hidden h-6 rounded-full cursor-pointer"></label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-2">Keamanan & Data</h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-4 border-b border-slate-50 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition" onclick="turboSync()">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-cyan-100 text-cyan-500 rounded-xl flex items-center justify-center"><i data-lucide="cloud-upload" class="w-5 h-5"></i></div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">Turbo Sync</p>
+                                <p class="text-xs text-slate-500 font-medium">Cadangkan database ke Google Sheets</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300"></i>
+                    </div>
+                    
+                    <div class="p-4 flex items-center justify-between cursor-pointer hover:bg-rose-50 transition" onclick="wipeDatabase()">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center"><i data-lucide="alert-triangle" class="w-5 h-5"></i></div>
+                            <div>
+                                <p class="text-sm font-bold text-rose-600">Hapus Semua Data</p>
+                                <p class="text-xs text-rose-400 font-medium">Reset pabrik (Hati-hati!)</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-rose-300"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center pt-6 pb-2">
+                <p class="text-xs font-bold text-slate-400">POS POCKET v2.0.5</p>
+                <p class="text-[10px] text-slate-400 mt-1">Sistem Point of Sale Offline-First</p>
+            </div>
+
+        </div>
+
+    </main>
+
+    <nav class="md:hidden bottom-nav fixed bottom-0 w-full bg-white flex justify-around items-end px-2 pt-2 pb-5 z-50 no-print">
+        <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Home</span></a>
+        <a href="inventory.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="package" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Stok</span></a>
+        <div class="w-16 flex justify-center"><a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6 hover:scale-105 transition-transform"><i data-lucide="scan-line" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-0.5">Sale</span></a></div>
+        <a href="supplier.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="users" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Supplier</span></a>
+        <a href="more.html" class="flex flex-col items-center text-orange-500 p-2 w-16 transition"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-1.5">More</span></a>
+    </nav>
+
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="js/db.js"></script> 
+    <script src="js/pages/more.js"></script> 
+    <script src="js/app.js"></script> 
+</body>
+</html>
