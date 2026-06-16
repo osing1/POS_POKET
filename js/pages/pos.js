@@ -382,13 +382,10 @@ function toggleScanner() {
         html5QrcodeScanner.start(
             { facingMode: "environment" }, 
             { 
-                fps: 15, // Turunkan sedikit dari 30 agar HP tidak terlalu panas/lag saat memproses gambar besar
-                
-                // MENGHILANGKAN qrbox MEMBUAT SCANNER MENJADI FULL SCREEN
-                // qrbox: { width: 280, height: 120 }, 
-                
-                // Membiarkan aspect ratio mengikuti bawaan kamera HP (biasanya 4:3 atau 16:9)
-                // aspectRatio: 1.0 
+                fps: 30, 
+                // PERBAIKAN: Hapus qrbox sepenuhnya! Biarkan kamera memenuhi wadah kotak yang kita buat di HTML.
+                // Atur aspectRatio menjadi 1.0 agar kamera memaksa bentuk kotak tanpa distorsi
+                aspectRatio: 1.0 
             }, 
             (decodedText) => {
                 html5QrcodeScanner.stop().then(() => {
