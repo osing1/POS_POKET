@@ -2,7 +2,7 @@
 
 let currentCategoryFilter = 'Semua';
 let formBarcodeScanner = null;
-let bulkPrintData = []; // Variabel khusus untuk menampung data cetak massal
+let bulkPrintData = [];
 
 function imgErrorLocal(image) {
     image.onerror = "";
@@ -250,7 +250,6 @@ async function openBulkPrintModal() {
     modal.classList.remove('hidden'); modal.classList.add('flex');
     document.getElementById('search-bulk-print').value = '';
     
-    // Ambil semua data dan set jumlah cetak awal (0 = tidak dipilih)
     const products = await db.products.toArray();
     bulkPrintData = products.map(p => ({ ...p, printQty: 0 }));
     
@@ -318,19 +317,23 @@ function updateBulkTotal() {
 }
 
 // Eksekusi Cetak Massal (Memproses Data ke Kertas Cetak)
-async function executeBulkPrint() {
-    const itemsToPrint = bulkPrintData.filter(p => p.printQty > 0);
+async function executeBulkPrint(singleItem = null) {
+    let itemsToPrint = [];
+    if (singleItem) {
+        itemsToPrint = [singleItem];
+    } else {
+        itemsToPrint = bulkPrintData.filter(p => p.printQty > 0);
+    }
+    
     if (itemsToPrint.length === 0) return alert("Pilih minimal satu barang untuk dicetak.");
 
     let htmlLabels = '';
 
-    // Mencegah layar "freeze" dengan memproses QR secara asinkron
     for (let item of itemsToPrint) {
         for (let i = 0; i < item.printQty; i++) {
             const qrDiv = document.createElement('div');
             new QRCode(qrDiv, { text: item.barcode, width: 150, height: 150, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
             
-            // Beri jeda sangat singkat agar canvas sempat tergambar di memori browser
             await new Promise(r => setTimeout(r, 10)); 
             const qrImageSrc = qrDiv.querySelector('canvas').toDataURL("image/png");
 
@@ -350,7 +353,7 @@ async function executeBulkPrint() {
     printWindow.document.write(`
         <html>
         <head>
-            <title>Cetak Massal Label QR</title>
+            <title>Cetak Label QR</title>
             <style>
                 body { font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; padding: 20px; background: #f8fafc; margin: 0; }
                 .label-container { background: white; border: 2px dashed #cbd5e1; padding: 15px; border-radius: 16px; text-align: center; width: 180px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
@@ -399,14 +402,13 @@ function printProductQR() {
     const barcode = document.getElementById('form-barcode').value;
     if (!barcode) return alert("Barcode tidak boleh kosong!");
     
-    // Meminjam logika cetak massal agar desain konsisten
-    bulkPrintData = [{
+    const singleItem = {
         name: document.getElementById('form-name').value,
         barcode: barcode,
         price: document.getElementById('form-price').value,
         printQty: 1
-    }];
-    executeBulkPrint();
+    };
+    executeBulkPrint(singleItem);
 }
 
 // ==========================================
