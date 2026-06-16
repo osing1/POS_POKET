@@ -3,7 +3,9 @@
 let restockCart = [];
 let html5QrcodeScanner = null;
 
-// Ganti Tab
+// ==========================================
+// GANTI TAB ANTARMUKA
+// ==========================================
 function switchTab(tabName) {
     ['restock', 'hutang', 'data'].forEach(name => {
         document.getElementById(`view-${name}`).classList.add('hidden');
@@ -18,7 +20,9 @@ function switchTab(tabName) {
     document.getElementById(`tab-${tabName}`).className = 'px-5 py-2.5 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition';
 }
 
+// ==========================================
 // 1. DATA SUPPLIER
+// ==========================================
 async function loadSuppliers() {
     const list = document.getElementById('supplier-list');
     const select = document.getElementById('supplier-select');
@@ -30,10 +34,7 @@ async function loadSuppliers() {
             list.innerHTML = '<p class="text-slate-400 text-sm">Belum ada data supplier.</p>';
         } else {
             suppliers.forEach(s => {
-                // Untuk Dropdown Restock
                 select.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-                
-                // Untuk Kartu Data Supplier
                 list.innerHTML += `
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                         <div class="flex items-center mb-2">
@@ -66,9 +67,13 @@ async function saveSupplier(e) {
     closeSupplierModal(); document.getElementById('supplier-form').reset(); loadSuppliers();
 }
 
-// 2. SCANNER RESTOCK (Gaya Modern)
+// ==========================================
+// 2. SCANNER RESTOCK (Deteksi Barcode Ritel)
+// ==========================================
 function toggleScanner() {
     const modal = document.getElementById('scanner-modal');
+    if (!modal) return;
+    
     if (modal.classList.contains('hidden')) {
         modal.classList.remove('hidden'); modal.classList.add('flex');
         
@@ -78,8 +83,16 @@ function toggleScanner() {
         html5QrcodeScanner.start(
             { facingMode: "environment", focusMode: "continuous" }, 
             { 
-                fps: 10, qrbox: { width: 300, height: 150 },
-                formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.CODE_128 ]
+                fps: 10, 
+                qrbox: { width: 300, height: 150 },
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39
+                ]
             }, 
             (decodedText) => {
                 html5QrcodeScanner.stop().then(() => {
@@ -87,7 +100,7 @@ function toggleScanner() {
                     addScannedProductToCart(decodedText);
                 });
             }, () => {}
-        ).catch(err => { alert("Kamera ditolak."); modal.classList.replace('flex', 'hidden'); });
+        ).catch(err => { alert("Akses Kamera ditolak."); modal.classList.replace('flex', 'hidden'); });
     } else {
         modal.classList.replace('flex', 'hidden');
         if(html5QrcodeScanner) html5QrcodeScanner.stop();
@@ -102,7 +115,7 @@ async function addScannedProductToCart(barcode) {
         if (existing) {
             existing.qty += 1;
         } else {
-            // Asumsi harga modal adalah 70% dari harga jual. Bisa diedit manual nanti.
+            // Prediksi Harga Modal (70% dari Harga Jual) - Bisa diubah manual oleh Kasir
             restockCart.push({ ...product, qty: 1, cost_price: Math.round(product.price * 0.7) });
         }
         updateRestockUI();
@@ -131,11 +144,11 @@ function updateRestockUI() {
                     <div class="grid grid-cols-2 gap-2 mt-2">
                         <div>
                             <label class="text-[10px] font-bold text-slate-500 uppercase">Jumlah (+)</label>
-                            <input type="number" min="1" value="${item.qty}" onchange="updateRestockInput(${index}, 'qty', this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm font-bold text-center outline-none">
+                            <input type="number" min="1" value="${item.qty}" onchange="updateRestockInput(${index}, 'qty', this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm font-bold text-center outline-none focus:border-orange-400">
                         </div>
                         <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase">Harga Modal (Rp)</label>
-                            <input type="number" min="0" value="${item.cost_price}" onchange="updateRestockInput(${index}, 'cost_price', this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm font-bold text-right outline-none text-orange-500">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">Modal Satuan (Rp)</label>
+                            <input type="number" min="0" value="${item.cost_price}" onchange="updateRestockInput(${index}, 'cost_price', this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm font-bold text-right outline-none text-orange-500 focus:border-orange-400">
                         </div>
                     </div>
                 </div>
@@ -150,13 +163,16 @@ function updateRestockInput(index, field, value) {
     restockCart[index][field] = parseInt(value) || 0;
     updateRestockUI();
 }
+
 function removeRestockItem(index) {
     restockCart.splice(index, 1);
     updateRestockUI();
 }
 
-// 3. PROSES RESTOCK (LUNAS / TEMPO)
-async function processRestock(status) {
+// ==========================================
+// 3. PROSES SIMPAN BARANG MASUK (DP/CICIL)
+// ==========================================
+async function processRestock() {
     if (restockCart.length === 0) return alert("Keranjang masih kosong!");
     
     const supplierId = document.getElementById('supplier-select').value;
@@ -165,50 +181,58 @@ async function processRestock(status) {
     let invoiceNo = document.getElementById('invoice-input').value;
     if (!invoiceNo) invoiceNo = 'PO-' + new Date().getTime().toString().slice(-6);
 
-    const total = restockCart.reduce((sum, i) => sum + (i.qty * i.cost_price), 0);
+    const totalTagihan = restockCart.reduce((sum, i) => sum + (i.qty * i.cost_price), 0);
     
-    // Tentukan nilai yang dibayar. Jika Tempo (Kasbon), amount_paid = 0.
-    const amountPaid = status === 'Lunas' ? total : 0;
+    // Ambil uang DP yang diketik kasir (Jika kosong, artinya 0)
+    let amountPaid = parseInt(document.getElementById('restock-pay-input').value) || 0;
     
-    // Tanggal jatuh tempo (Default 14 Hari jika Tempo)
+    if(amountPaid > totalTagihan) { amountPaid = totalTagihan; }
+
+    let status = 'Tempo';
     let dueDate = null;
-    if (status === 'Tempo') {
+    
+    if (amountPaid >= totalTagihan) {
+        status = 'Lunas';
+    } else {
         let d = new Date();
-        d.setDate(d.getDate() + 14); 
+        d.setDate(d.getDate() + 14); // Jatuh tempo 14 hari
         dueDate = d.toISOString();
     }
 
     try {
-        // Simpan nota pembelian ke database
         const purchaseId = await db.purchases.add({
             invoice_no: invoiceNo, supplier_id: parseInt(supplierId), date: new Date().toISOString(),
-            total: total, status: status, amount_paid: amountPaid, due_date: dueDate
+            total: totalTagihan, status: status, amount_paid: amountPaid, due_date: dueDate
         });
 
-        // Simpan rincian barang dan update stok
         for (let item of restockCart) {
             await db.purchase_items.add({
                 purchase_id: purchaseId, product_id: item.barcode, name: item.name,
                 qty: item.qty, cost_price: item.cost_price, subtotal: item.qty * item.cost_price
             });
-            // Update stok Inventori asli
+            // Update Stok Asli
             await db.products.update(item.id, { stock: item.stock + item.qty });
         }
 
-        alert(`Berhasil! Barang masuk disimpan. Status: ${status}`);
-        restockCart = []; document.getElementById('invoice-input').value = '';
-        updateRestockUI(); loadHutang(); // Refresh Buku Hutang
+        let pesan = status === 'Lunas' ? "LUNAS!" : `HUTANG (DP: Rp ${amountPaid.toLocaleString('id-ID')})`;
+        alert(`Berhasil! Barang masuk tersimpan.\nStatus: ${pesan}`);
+        
+        restockCart = []; 
+        document.getElementById('invoice-input').value = '';
+        document.getElementById('restock-pay-input').value = '';
+        updateRestockUI(); loadHutang(); 
     } catch (e) { console.error(e); alert("Terjadi kesalahan sistem."); }
 }
 
+// ==========================================
 // 4. BUKU HUTANG (ACCOUNTS PAYABLE)
+// ==========================================
 async function loadHutang() {
     const list = document.getElementById('hutang-list');
     let totalHutang = 0;
     list.innerHTML = '';
     
     try {
-        // Ambil data pembelian yang berstatus 'Tempo'
         const hutangData = await db.purchases.where('status').equals('Tempo').toArray();
         
         if(hutangData.length === 0) {
@@ -218,10 +242,8 @@ async function loadHutang() {
                 const sisaTagihan = h.total - h.amount_paid;
                 totalHutang += sisaTagihan;
                 
-                // Cari nama supplier
                 const sup = await db.suppliers.get(h.supplier_id);
                 const supName = sup ? sup.name : 'Unknown Supplier';
-                
                 const dueStr = new Date(h.due_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
 
                 list.innerHTML += `
@@ -231,37 +253,56 @@ async function loadHutang() {
                                 <h4 class="font-extrabold text-sm text-slate-800">${supName}</h4>
                                 <p class="text-[10px] font-mono text-slate-500">${h.invoice_no}</p>
                             </div>
-                            <span class="bg-rose-100 text-rose-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Jatuh Tempo: ${dueStr}</span>
+                            <span class="bg-rose-100 text-rose-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Tempo: ${dueStr}</span>
                         </div>
-                        <div class="flex justify-between items-end mt-4">
-                            <div>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase">Sisa Tagihan</p>
-                                <p class="text-lg font-extrabold text-rose-600">Rp ${sisaTagihan.toLocaleString('id-ID')}</p>
-                            </div>
-                            <button onclick="lunasiHutang(${h.id})" class="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition">Lunasi</button>
+                        <div class="mt-3 mb-4 bg-slate-50 p-2 rounded-lg text-xs">
+                            <div class="flex justify-between text-slate-500 mb-1"><span>Total Beli:</span> <span>Rp ${h.total.toLocaleString('id-ID')}</span></div>
+                            <div class="flex justify-between text-emerald-600 font-bold border-b border-slate-200 pb-1 mb-1"><span>Telah Dibayar:</span> <span>Rp ${h.amount_paid.toLocaleString('id-ID')}</span></div>
+                            <div class="flex justify-between font-extrabold text-rose-600 mt-1"><span>SISA HUTANG:</span> <span>Rp ${sisaTagihan.toLocaleString('id-ID')}</span></div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button onclick="bayarHutang(${h.id}, ${sisaTagihan})" class="bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-slate-800 transition shadow-sm flex items-center">
+                                <i data-lucide="wallet" class="w-3 h-3 mr-1.5"></i> Bayar Cicilan / Lunas
+                            </button>
                         </div>
                     </div>
                 `;
             }
         }
         document.getElementById('total-hutang').textContent = `Rp ${totalHutang.toLocaleString('id-ID')}`;
+        lucide.createIcons();
     } catch (e) { console.error(e); }
 }
 
-async function lunasiHutang(purchaseId) {
-    if(confirm("Tandai nota ini sebagai LUNAS? Saldo akan tercatat di pengeluaran.")) {
+async function bayarHutang(purchaseId, sisaTagihan) {
+    let inputCicilan = prompt(`Masukkan nominal yang akan dibayarkan (Sisa Hutang: Rp ${sisaTagihan.toLocaleString('id-ID')}):`);
+    
+    if (inputCicilan === null || inputCicilan === "") return;
+    
+    let nominalDibayar = parseInt(inputCicilan);
+    if (isNaN(nominalDibayar) || nominalDibayar <= 0) return alert("Nominal tidak valid!");
+
+    try {
         const p = await db.purchases.get(purchaseId);
-        await db.purchases.update(purchaseId, { status: 'Lunas', amount_paid: p.total });
-        alert("Nota berhasil dilunasi!");
-        loadHutang();
-    }
+        let newAmountPaid = p.amount_paid + nominalDibayar;
+        let newStatus = 'Tempo';
+
+        if (newAmountPaid >= p.total) {
+            newAmountPaid = p.total;
+            newStatus = 'Lunas';
+            alert("Nota ini telah LUNAS!");
+        } else {
+            alert(`Berhasil masuk cicilan Rp ${nominalDibayar.toLocaleString('id-ID')}. Sisa hutang: Rp ${(p.total - newAmountPaid).toLocaleString('id-ID')}`);
+        }
+
+        await db.purchases.update(purchaseId, { status: newStatus, amount_paid: newAmountPaid });
+        loadHutang(); 
+    } catch (error) { console.error("Gagal membayar hutang:", error); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof db !== 'undefined') {
-        loadSuppliers();
-        loadHutang();
-        updateRestockUI();
+        loadSuppliers(); loadHutang(); updateRestockUI();
         lucide.createIcons();
     }
 });
