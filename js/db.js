@@ -2,16 +2,16 @@
 
 const db = new Dexie("POSPocketDB");
 
-// V5: Tambah tabel customers untuk fitur Member & Kasbon Pelanggan
-db.version(5).stores({
+// V6: Tambah status dan customer_id pada tabel sales untuk fitur Kasbon
+db.version(6).stores({
     products: 'id, barcode, name, category, price, stock, image_url',
-    sales: '++id, receipt_no, date, total, payment_method, amount_paid, change, sync_status', 
+    sales: '++id, receipt_no, date, total, payment_method, amount_paid, change, customer_id, status, sync_status', 
     sale_items: '++id, sale_id, product_id, name, qty, price, subtotal',
     suppliers: '++id, name, phone, address',
     purchases: '++id, invoice_no, supplier_id, date, total, status, amount_paid, due_date', 
     purchase_items: '++id, purchase_id, product_id, name, qty, cost_price, subtotal',
-    employees: '++id, name, role, pin, phone', // Diperbarui untuk PIN Kasir
-    customers: '++id, name, phone, address, points', // Tabel Baru
+    employees: '++id, name, role, pin, phone',
+    customers: '++id, name, phone, address, points',
     attendance: '++id, employee_id, date, check_in, status, sync_status',
     settings: 'key, value'
 });
