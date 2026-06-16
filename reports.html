@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POS Pocket - Laporan</title>
+    <title>POS Pocket - Analitik</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -61,10 +61,10 @@
         <div class="flex-1 overflow-y-auto p-4 md:p-6 max-w-6xl mx-auto w-full hide-scrollbar">
             
             <div class="flex space-x-2 mb-5 overflow-x-auto hide-scrollbar pb-1">
-                <button onclick="filterByDate('today', this)" class="date-filter-btn px-5 py-2 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition">Hari Ini</button>
-                <button onclick="filterByDate('7days', this)" class="date-filter-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition">7 Hari Terakhir</button>
-                <button onclick="filterByDate('30days', this)" class="date-filter-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition">30 Hari Terakhir</button>
-                <button onclick="filterByDate('all', this)" class="date-filter-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition">Semua Waktu</button>
+                <button data-range="today" onclick="filterByDate('today', this)" class="date-filter-btn px-5 py-2 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition">Hari Ini</button>
+                <button data-range="7days" onclick="filterByDate('7days', this)" class="date-filter-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition">7 Hari Terakhir</button>
+                <button data-range="30days" onclick="filterByDate('30days', this)" class="date-filter-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition">30 Hari Terakhir</button>
+                <button data-range="all" onclick="filterByDate('all', this)" class="date-filter-btn px-5 py-2 rounded-xl bg-white text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-50 transition">Semua Waktu</button>
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-6">
@@ -89,11 +89,11 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pb-10">
-                <div class="md:col-span-2">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-10">
+                <div class="lg:col-span-2">
                     <div class="flex justify-between items-end mb-3 px-1">
                         <h3 class="font-extrabold text-sm text-slate-800">Daftar Transaksi</h3>
-                        <div class="bg-white border border-slate-200 rounded-lg flex items-center px-3 py-1.5 shadow-sm focus-within:border-orange-400 w-1/2 md:w-1/3">
+                        <div class="bg-white border border-slate-200 rounded-lg flex items-center px-3 py-1.5 shadow-sm focus-within:border-orange-400 w-1/2 md:w-1/3 lg:w-1/2">
                             <i data-lucide="search" class="text-slate-400 w-3 h-3"></i>
                             <input type="text" id="search-report" placeholder="Cari nota..." class="bg-transparent w-full ml-2 outline-none text-xs font-medium text-slate-700">
                         </div>
@@ -101,7 +101,7 @@
                     <div id="transaction-list" class="space-y-3"></div>
                 </div>
 
-                <div class="md:col-span-1">
+                <div class="lg:col-span-1">
                     <h3 class="font-extrabold text-sm text-slate-800 mb-3 px-1 flex items-center"><i data-lucide="award" class="w-4 h-4 mr-2 text-amber-500"></i> Produk Terlaris</h3>
                     <div id="top-products-list" class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-4">
                         </div>
@@ -148,5 +148,6 @@
     <script src="js/sync.js"></script> 
     <script src="js/pages/reports.js"></script> 
     <script src="js/app.js"></script> 
+    <script>lucide.createIcons();</script>
 </body>
 </html>
