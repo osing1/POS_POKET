@@ -281,7 +281,8 @@ function renderBulkPrintList(keyword = '') {
 }
 
 function toggleBulkItem(barcode) {
-    const item = bulkPrintData.find(p => p.barcode === String(barcode));
+    // PERBAIKAN: Ubah p.barcode menjadi String agar cocok dengan klik dari HTML
+    const item = bulkPrintData.find(p => String(p.barcode) === String(barcode));
     if (item) {
         item.printQty = item.printQty > 0 ? 0 : 1;
         renderBulkPrintList(document.getElementById('search-bulk-print').value);
@@ -290,10 +291,11 @@ function toggleBulkItem(barcode) {
 }
 
 function updateBulkQty(barcode, change) {
-    const item = bulkPrintData.find(p => p.barcode === String(barcode));
+    // PERBAIKAN: Ubah p.barcode menjadi String 
+    const item = bulkPrintData.find(p => String(p.barcode) === String(barcode));
     if (item) {
         item.printQty += change;
-        if (item.printQty < 0) item.printQty = 0;
+        if (item.printQty < 0) item.printQty = 0; // Cegah minus
         renderBulkPrintList(document.getElementById('search-bulk-print').value);
         updateBulkTotal();
     }
