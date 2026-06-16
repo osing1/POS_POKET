@@ -366,23 +366,47 @@ function toggleMobileCart() {
     else { cartPanel.classList.replace('cart-slide-up', 'cart-slide-down'); overlay.classList.add('hidden'); }
 }
 
+// Ganti fungsi toggleScanner di js/pages/pos.js dengan kode ini:
+
 function toggleScanner() {
     const modal = document.getElementById('scanner-modal');
     if (!modal) return;
+    
     if (modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden'); modal.classList.add('flex');
+        modal.classList.remove('hidden'); 
+        modal.classList.add('flex');
+        
         html5QrcodeScanner = new Html5Qrcode("reader");
+        
+        // Konfigurasi Baru: Layar Penuh (Tanpa kotak pembatas kecil)
         html5QrcodeScanner.start(
-            { facingMode: "environment" }, { fps: 30, qrbox: { width: 280, height: 120 }, aspectRatio: 1.0 }, 
+            { facingMode: "environment" }, 
+            { 
+                fps: 15, // Turunkan sedikit dari 30 agar HP tidak terlalu panas/lag saat memproses gambar besar
+                
+                // MENGHILANGKAN qrbox MEMBUAT SCANNER MENJADI FULL SCREEN
+                // qrbox: { width: 280, height: 120 }, 
+                
+                // Membiarkan aspect ratio mengikuti bawaan kamera HP (biasanya 4:3 atau 16:9)
+                // aspectRatio: 1.0 
+            }, 
             (decodedText) => {
                 html5QrcodeScanner.stop().then(() => {
-                    modal.classList.add('hidden'); modal.classList.remove('flex');
+                    modal.classList.add('hidden'); 
+                    modal.classList.remove('flex');
                     cariDanTambahProdukByBarcode(decodedText);
                 }).catch(err => console.error(err));
-            }, (errorMessage) => {}
-        ).catch((err) => { alert("Izin kamera ditolak."); modal.classList.add('hidden'); modal.classList.remove('flex'); });
+            }, (errorMessage) => {
+                // Jangan tampilkan alert di sini, karena scanner akan terus mencoba membaca setiap frame
+            }
+        ).catch((err) => { 
+            alert("Izin kamera ditolak atau kamera tidak dapat digunakan."); 
+            modal.classList.add('hidden'); 
+            modal.classList.remove('flex'); 
+        });
     } else {
-        modal.classList.add('hidden'); modal.classList.remove('flex');
+        modal.classList.add('hidden'); 
+        modal.classList.remove('flex');
         if(html5QrcodeScanner) html5QrcodeScanner.stop().catch(e => console.log(e));
     }
 }
