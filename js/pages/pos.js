@@ -12,7 +12,7 @@ function imgError(image) {
 }
 
 // =========================================================
-// FITUR BARU: Generate Kategori Dinamis (Seperti di Inventori)
+// FITUR: Generate Kategori Dinamis
 // =========================================================
 async function generateCategoryTabs() {
     try {
@@ -366,8 +366,9 @@ function toggleMobileCart() {
     else { cartPanel.classList.replace('cart-slide-up', 'cart-slide-down'); overlay.classList.add('hidden'); }
 }
 
-// Ganti fungsi toggleScanner di js/pages/pos.js dengan kode ini:
-
+// =========================================================
+// FITUR: Scanner Kamera Full Screen (Anti-Crash, Fokus Lebar)
+// =========================================================
 function toggleScanner() {
     const modal = document.getElementById('scanner-modal');
     if (!modal) return;
@@ -378,23 +379,22 @@ function toggleScanner() {
         
         html5QrcodeScanner = new Html5Qrcode("reader");
         
-        // Konfigurasi Baru: Layar Penuh (Tanpa kotak pembatas kecil)
+        // Konfigurasi Layar Penuh (Tanpa kotak qrbox agar fokus kamera tidak terganggu)
         html5QrcodeScanner.start(
             { facingMode: "environment" }, 
             { 
                 fps: 30, 
-                // PERBAIKAN: Hapus qrbox sepenuhnya! Biarkan kamera memenuhi wadah kotak yang kita buat di HTML.
-                // Atur aspectRatio menjadi 1.0 agar kamera memaksa bentuk kotak tanpa distorsi
                 aspectRatio: 1.0 
             }, 
             (decodedText) => {
+                // Berhasil scan -> Matikan kamera dulu -> Tutup modal -> Cari barang
                 html5QrcodeScanner.stop().then(() => {
                     modal.classList.add('hidden'); 
                     modal.classList.remove('flex');
                     cariDanTambahProdukByBarcode(decodedText);
-                }).catch(err => console.error(err));
+                }).catch(err => console.error("Gagal stop kamera:", err));
             }, (errorMessage) => {
-                // Jangan tampilkan alert di sini, karena scanner akan terus mencoba membaca setiap frame
+                // Abaikan log error saat proses scanning
             }
         ).catch((err) => { 
             alert("Izin kamera ditolak atau kamera tidak dapat digunakan."); 
@@ -402,6 +402,7 @@ function toggleScanner() {
             modal.classList.remove('flex'); 
         });
     } else {
+        // Jika tombol close atau kembali dipencet manual
         modal.classList.add('hidden'); 
         modal.classList.remove('flex');
         if(html5QrcodeScanner) html5QrcodeScanner.stop().catch(e => console.log(e));
@@ -412,7 +413,7 @@ async function cariDanTambahProdukByBarcode(barcode) {
     const allProducts = await db.products.toArray();
     const product = allProducts.find(p => String(p.barcode) === String(barcode));
     if(product) addToCart(product);
-    else alert(`❌ Barang dengan barcode "${barcode}" tidak ditemukan.`);
+    else alert(`❌ Barang dengan barcode "${barcode}" tidak ditemukan di Inventori.`);
 }
 
 async function triggerSearch(keyword) {
