@@ -126,27 +126,46 @@ function closeFormModal() {
     if (formBarcodeScanner) formBarcodeScanner.stop().catch(e => {});
 }
 
-// 4. Scanner Kamera 30FPS
+// 4. Scanner Kamera 30FPS (FULL SCREEN UI)
 function toggleFormScanner() {
     const modal = document.getElementById('form-scanner-modal');
+    if (!modal) return;
+    
     if (modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden'); modal.classList.add('flex');
+        modal.classList.remove('hidden'); 
+        modal.classList.add('flex');
+        
         formBarcodeScanner = new Html5Qrcode("form-reader");
-        formBarcodeScanner.start({ facingMode: "environment" }, { fps: 30, qrbox: { width: 280, height: 120 }, aspectRatio: 1.0 }, 
+        
+        // Konfigurasi Layar Penuh
+        formBarcodeScanner.start(
+            { facingMode: "environment" }, 
+            { 
+                fps: 15, // Cukup untuk responsif, tidak over-heat
+                aspectRatio: 1.0 // Menjaga grid kotak sempurna
+                // qrbox dihilangkan agar full screen
+            }, 
             (decodedText) => {
-                document.getElementById('form-barcode').value = decodedText;
-                formBarcodeScanner.stop();
-                modal.classList.add('hidden'); modal.classList.remove('flex');
-            }, (errorMessage) => {}
-        ).catch((err) => {
-            alert("Akses kamera ditolak.");
-            modal.classList.add('hidden'); modal.classList.remove('flex');
+                formBarcodeScanner.stop().then(() => {
+                    modal.classList.add('hidden'); 
+                    modal.classList.remove('flex');
+                    document.getElementById('form-barcode').value = decodedText;
+                }).catch(err => console.error(err));
+            }, (errorMessage) => {
+                // Abaikan error background
+            }
+        ).catch((err) => { 
+            alert("Akses kamera ditolak."); 
+            modal.classList.add('hidden'); 
+            modal.classList.remove('flex'); 
         });
     } else {
-        modal.classList.add('hidden'); modal.classList.remove('flex');
+        modal.classList.add('hidden'); 
+        modal.classList.remove('flex');
         if(formBarcodeScanner) formBarcodeScanner.stop().catch(e => {});
     }
 }
+
 // 5. Upload Foto ke Cloud
 async function uploadPhotoToDrive() {
     const fileInput = document.getElementById('form-file-upload');
@@ -280,7 +299,6 @@ function renderBulkPrintList(keyword = '') {
 }
 
 function toggleBulkItem(barcode) {
-    // PERBAIKAN: Ubah p.barcode menjadi String agar cocok dengan klik dari HTML
     const item = bulkPrintData.find(p => String(p.barcode) === String(barcode));
     if (item) {
         item.printQty = item.printQty > 0 ? 0 : 1;
@@ -290,11 +308,10 @@ function toggleBulkItem(barcode) {
 }
 
 function updateBulkQty(barcode, change) {
-    // PERBAIKAN: Ubah p.barcode menjadi String 
     const item = bulkPrintData.find(p => String(p.barcode) === String(barcode));
     if (item) {
         item.printQty += change;
-        if (item.printQty < 0) item.printQty = 0; // Cegah minus
+        if (item.printQty < 0) item.printQty = 0; 
         renderBulkPrintList(document.getElementById('search-bulk-print').value);
         updateBulkTotal();
     }
@@ -305,13 +322,12 @@ function updateBulkTotal() {
     document.getElementById('bulk-total-labels').textContent = total;
 }
 
-// Eksekusi Cetak (Bisa Massal atau Tunggal)
 async function executeBulkPrint(singleItem = null) {
     let itemsToPrint = [];
     if (singleItem) {
-        itemsToPrint = [singleItem]; // Paksa hanya cetak barang ini
+        itemsToPrint = [singleItem]; 
     } else {
-        itemsToPrint = bulkPrintData.filter(p => p.printQty > 0); // Cetak banyak barang
+        itemsToPrint = bulkPrintData.filter(p => p.printQty > 0); 
     }
     
     if (itemsToPrint.length === 0) return alert("Pilih minimal satu barang untuk dicetak.");
@@ -380,12 +396,10 @@ async function executeBulkPrint(singleItem = null) {
     printWindow.onload = function() { printWindow.focus(); };
 }
 
-// 7. Cetak Label Tunggal (Dari Modal Edit)
 function printProductQR() {
     const barcode = document.getElementById('form-barcode').value;
     if (!barcode) return alert("Barcode tidak boleh kosong!");
     
-    // Kirim objek spesifik agar yang tercetak hanya 1 barang ini
     const singleItem = {
         name: document.getElementById('form-name').value,
         barcode: barcode,
