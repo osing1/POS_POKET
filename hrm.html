@@ -3,30 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POS Pocket - Employee HRM</title>
+    <title>POS Pocket - HRM & Pelanggan</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --bg-body: #f8fafc; }
-        body { background-color: var(--bg-body); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
-        .bottom-nav { box-shadow: 0 -4px 25px rgba(0,0,0,0.06); border-top-left-radius: 24px; border-top-right-radius: 24px; }
-        .btn-sale-float { background: linear-gradient(135deg, #ff7043, #ff5722); transform: translateY(-20px); box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4); border: 4px solid white; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Bayangan Khusus Kartu HRM */
-        .hrm-shadow { box-shadow: 0 8px 20px -6px rgba(0,0,0,0.05); }
+        .bottom-nav { box-shadow: 0 -4px 25px rgba(0,0,0,0.06); border-top-left-radius: 24px; border-top-right-radius: 24px; }
+        .btn-sale-float { background: linear-gradient(135deg, #ff7043, #ff5722); transform: translateY(-20px); box-shadow: 0 8px 20px rgba(255, 87, 34, 0.4); border: 4px solid white; }
     </style>
 </head>
-<body class="flex text-slate-800 pb-24 md:pb-0">
+<body class="flex text-slate-800 pb-24 md:pb-0 h-screen overflow-hidden">
 
-    <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden border-r border-slate-800">
-        <div class="p-6 flex items-center space-x-3 border-b border-slate-800/80 bg-slate-900">
+    <aside class="hidden md:flex w-[260px] h-screen fixed top-0 left-0 bg-slate-900 text-white flex-col shadow-2xl z-50 md:rounded-r-[30px] overflow-hidden border-r border-slate-800 no-print">
+        <div class="p-6 flex items-center space-x-3 border-b border-slate-800 bg-slate-900">
             <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg"><i data-lucide="pocket" class="text-white"></i></div>
             <h2 class="text-2xl font-extrabold tracking-wide">POS Pocket</h2>
         </div>
-        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6">
+        <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto bg-slate-900 pb-6 hide-scrollbar">
             <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="home"></i> <span class="font-medium">Beranda</span></a>
             <a href="inventory.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="package"></i> <span class="font-medium">Inventori</span></a>
             <a href="sale.html" class="flex items-center space-x-3 hover:bg-slate-800 p-3.5 rounded-xl transition text-slate-300 hover:text-white"><i data-lucide="scan-barcode"></i> <span class="font-medium">Kasir / POS</span></a>
@@ -36,122 +32,113 @@
         </nav>
     </aside>
 
-    <main class="w-full min-h-screen relative md:ml-[260px] md:w-[calc(100%-260px)] bg-slate-50">
+    <main class="w-full flex flex-col h-screen relative md:ml-[260px] md:w-[calc(100%-260px)] bg-slate-50">
         
-        <div class="bg-[#1a2035] text-white pt-6 pb-10 px-5 md:rounded-b-[40px] rounded-b-[30px] shadow-lg relative z-10 w-full max-w-2xl mx-auto md:max-w-none">
+        <header class="bg-white p-5 flex justify-between items-center shadow-sm shrink-0 border-b border-slate-100 z-20">
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800">HRM & Pelanggan</h1>
+                <p class="text-xs font-medium text-slate-500">Karyawan, Member, & Kasbon</p>
+            </div>
+        </header>
+
+        <!-- TABS -->
+        <div class="px-5 py-3 bg-white border-b border-slate-100 flex space-x-2 overflow-x-auto hide-scrollbar shrink-0">
+            <button onclick="switchTab('karyawan')" id="tab-karyawan" class="px-5 py-2.5 rounded-xl bg-orange-500 text-white font-bold text-sm shadow-sm whitespace-nowrap transition">Data Karyawan</button>
+            <button onclick="switchTab('pelanggan')" id="tab-pelanggan" class="px-5 py-2.5 rounded-xl bg-slate-50 text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-100 transition">Data Pelanggan</button>
+            <button onclick="switchTab('piutang')" id="tab-piutang" class="px-5 py-2.5 rounded-xl bg-slate-50 text-slate-600 font-medium text-sm border border-slate-200 whitespace-nowrap hover:bg-slate-100 transition">Buku Piutang (Kasbon)</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 hide-scrollbar relative">
             
-            <div class="flex justify-between items-center mb-6">
-                <a href="index.html" class="md:hidden text-white hover:text-orange-400 transition"><i data-lucide="chevron-left" class="w-7 h-7"></i></a>
-                <h1 class="text-lg font-bold mx-auto md:mx-0">Employee HRM</h1>
-                <button class="md:hidden text-white"><i data-lucide="more-vertical" class="w-6 h-6"></i></button>
+            <!-- VIEW: KARYAWAN -->
+            <div id="view-karyawan" class="block max-w-5xl mx-auto pb-10">
+                <div class="flex justify-end mb-4">
+                    <button onclick="openEmployeeModal()" class="bg-slate-900 text-white font-bold py-2 px-4 rounded-xl shadow-sm hover:bg-slate-800 transition flex items-center text-sm">
+                        <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Tambah Karyawan
+                    </button>
+                </div>
+                <div id="employee-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
-            <div class="flex items-center justify-between mb-5">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-white text-slate-800 rounded-xl flex items-center justify-center font-bold text-xl shadow-md">
-                        <i data-lucide="user" class="w-6 h-6 text-slate-400"></i>
+            <!-- VIEW: PELANGGAN -->
+            <div id="view-pelanggan" class="hidden max-w-5xl mx-auto pb-10">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="bg-white border border-slate-200 rounded-xl flex items-center px-4 py-2 shadow-sm w-1/2 md:w-1/3">
+                        <i data-lucide="search" class="text-slate-400 w-4 h-4"></i>
+                        <input type="text" id="search-customer" placeholder="Cari nama..." class="bg-transparent w-full ml-3 outline-none text-sm font-medium" oninput="loadCustomers(this.value)">
                     </div>
-                    <div>
-                        <div class="flex items-center space-x-2 cursor-pointer">
-                            <h2 class="text-lg font-bold tracking-wide">Administrator</h2>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
-                        </div>
-                        <p class="text-[11px] text-slate-400 font-medium">ID: 001 | Super Admin</p>
+                    <button onclick="openCustomerModal()" class="bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl shadow-sm hover:bg-emerald-600 transition flex items-center text-sm">
+                        <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Tambah Pelanggan
+                    </button>
+                </div>
+                <div id="customer-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- VIEW: BUKU PIUTANG (KASBON PELANGGAN) -->
+            <div id="view-piutang" class="hidden max-w-5xl mx-auto pb-10">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-orange-50 border border-orange-200 rounded-2xl p-5">
+                        <p class="text-xs font-bold text-orange-500 uppercase tracking-wider mb-1">Uang di Luar (Piutang)</p>
+                        <h3 class="text-2xl font-extrabold text-orange-600" id="total-piutang">Rp 0</h3>
+                    </div>
+                </div>
+                <div id="piutang-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Kartu Piutang akan digenerate via JS nanti saat fitur Kasir diperbarui -->
+                    <div class="col-span-full text-center py-10 bg-white border border-slate-100 rounded-2xl">
+                        <i data-lucide="wallet" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+                        <p class="text-slate-500 text-sm font-medium">Buku Piutang akan terisi otomatis saat Anda menggunakan pembayaran "Kasbon" di menu Kasir.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="flex items-center text-[11px] text-orange-400 font-medium">
-                <i data-lucide="refresh-cw" class="w-3 h-3 mr-1.5"></i>
-                <span>Last check in : <span class="text-white">10 min ago</span></span>
+        </div>
+
+        <!-- MODAL TAMBAH KARYAWAN -->
+        <div id="employee-modal" class="fixed inset-0 bg-slate-900/60 z-[70] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative">
+                <button onclick="closeEmployeeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+                <h2 class="text-lg font-extrabold text-slate-800 mb-4 flex items-center"><i data-lucide="user-plus" class="w-5 h-5 mr-2 text-blue-500"></i> Data Karyawan</h2>
+                <form id="employee-form" onsubmit="saveEmployee(event)">
+                    <input type="text" id="emp-name" placeholder="Nama Lengkap" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-3 outline-none">
+                    <select id="emp-role" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-3 outline-none">
+                        <option value="Kasir">Kasir</option>
+                        <option value="Admin">Admin Utama</option>
+                        <option value="Gudang">Staf Gudang</option>
+                    </select>
+                    <input type="password" id="emp-pin" placeholder="PIN Akses (4 Digit)" required maxlength="4" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold text-center tracking-[0.5em] mb-4 outline-none">
+                    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-md">Simpan Karyawan</button>
+                </form>
             </div>
         </div>
 
-        <div class="px-5 -mt-5 relative z-20 max-w-lg mx-auto md:max-w-5xl md:px-8">
-            
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="bg-white p-4 rounded-[20px] hrm-shadow border border-slate-100 flex flex-col justify-between">
-                    <span class="text-xs text-slate-500 font-medium mb-1">Pulang Cepat</span>
-                    <div class="flex justify-between items-end">
-                        <span class="text-2xl font-bold text-purple-500 ml-auto">4</span>
-                    </div>
-                </div>
-                <div class="bg-white p-4 rounded-[20px] hrm-shadow border border-slate-100 flex flex-col justify-between">
-                    <span class="text-xs text-slate-500 font-medium mb-1">Absen</span>
-                    <div class="flex justify-between items-end">
-                        <span class="text-2xl font-bold text-emerald-500 ml-auto">2</span>
-                    </div>
-                </div>
-                <div class="bg-white p-4 rounded-[20px] hrm-shadow border border-slate-100 flex flex-col justify-between">
-                    <span class="text-xs text-slate-500 font-medium mb-1">Hadir</span>
-                    <div class="flex justify-between items-end">
-                        <span class="text-2xl font-bold text-blue-500 ml-auto">15</span>
-                    </div>
-                </div>
-                <div class="bg-white p-4 rounded-[20px] hrm-shadow border border-slate-100 flex flex-col justify-between">
-                    <span class="text-xs text-slate-500 font-medium mb-1">Terlambat</span>
-                    <div class="flex justify-between items-end">
-                        <span class="text-2xl font-bold text-orange-500 ml-auto">3</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-slate-200/70 p-1.5 rounded-xl flex items-center mb-6">
-                <button class="flex-1 bg-white shadow-sm py-2.5 rounded-lg text-sm font-bold text-slate-800 transition">Presensi</button>
-                <button class="flex-1 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 transition">Aktivitas</button>
-            </div>
-
-            <div class="bg-white p-6 rounded-[28px] hrm-shadow border border-slate-100 flex flex-col items-center text-center mb-8">
-                <div class="flex items-center space-x-2 text-xs text-slate-500 font-medium bg-slate-50 px-3 py-1.5 rounded-full mb-6">
-                    <i data-lucide="map-pin" class="w-4 h-4 text-orange-500"></i>
-                    <span>Lokasi : UPT PSDA Bondoyudo</span>
-                </div>
-                
-                <div class="mb-8">
-                    <h2 class="text-4xl font-extrabold text-slate-800 tracking-tight" id="live-time">--:-- --</h2>
-                    <p class="text-xs text-slate-400 font-medium mt-2 uppercase tracking-wide" id="live-date">Memuat Tanggal...</p>
-                </div>
-
-                <button class="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center shadow-inner hover:bg-slate-200 hover:scale-105 transition-all active:scale-95 border border-slate-200">
-                    <i data-lucide="fingerprint" class="w-10 h-10 text-slate-400"></i>
-                </button>
-                <p class="text-[10px] text-slate-400 font-medium mt-4">Ketuk untuk merekam kehadiran</p>
+        <!-- MODAL TAMBAH PELANGGAN -->
+        <div id="customer-modal" class="fixed inset-0 bg-slate-900/60 z-[70] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative">
+                <button onclick="closeCustomerModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+                <h2 class="text-lg font-extrabold text-slate-800 mb-4 flex items-center"><i data-lucide="users" class="w-5 h-5 mr-2 text-emerald-500"></i> Data Pelanggan</h2>
+                <form id="customer-form" onsubmit="saveCustomer(event)">
+                    <input type="text" id="cust-name" placeholder="Nama Pelanggan" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-3 outline-none">
+                    <input type="text" id="cust-phone" placeholder="No. Telepon / WA" required class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-3 outline-none">
+                    <textarea id="cust-address" placeholder="Catatan / Alamat" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold mb-4 outline-none"></textarea>
+                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-md transition">Simpan Pelanggan</button>
+                </form>
             </div>
         </div>
+
     </main>
 
+    <!-- NAVIGASI BAWAH MOBILE -->
     <nav class="md:hidden bottom-nav fixed bottom-0 w-full bg-white flex justify-around items-end px-2 pt-2 pb-5 z-50">
         <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="home" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Home</span></a>
         <a href="inventory.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="package" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Stok</span></a>
         <div class="w-16 flex justify-center"><a href="sale.html" class="flex flex-col items-center btn-sale-float w-14 h-14 rounded-2xl justify-center text-white absolute bottom-6"><i data-lucide="scan-line" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-0.5">Sale</span></a></div>
-        <a href="supplier.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="users" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Supplier</span></a>
-        <a href="more.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">More</span></a>
+        <a href="hrm.html" class="flex flex-col items-center text-orange-500 p-2 w-16"><i data-lucide="users" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-1.5">HRM</span></a>
+        <a href="reports.html" class="flex flex-col items-center text-slate-400 hover:text-slate-600 p-2 w-16 transition"><i data-lucide="bar-chart-2" class="w-6 h-6"></i><span class="text-[10px] font-medium mt-1.5">Laporan</span></a>
     </nav>
 
-    <script>
-        lucide.createIcons();
-
-        // Skrip Jam Real-Time
-        function updateClock() {
-            const now = new Date();
-            let hours = now.getHours();
-            let minutes = now.getMinutes();
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            
-            hours = hours % 12;
-            hours = hours ? hours : 12; 
-            minutes = minutes < 10 ? '0' + minutes : minutes;
-            
-            const timeString = hours + ':' + minutes + ' ' + ampm;
-            document.getElementById('live-time').textContent = timeString;
-
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('live-date').textContent = now.toLocaleDateString('id-ID', options);
-        }
-
-        setInterval(updateClock, 1000);
-        updateClock(); // Inisialisasi awal
-    </script>
-    <script src="js/app.js"></script>
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="js/db.js"></script> 
+    <script src="js/pages/hrm.js"></script> 
+    <script src="js/app.js"></script> 
 </body>
 </html>
